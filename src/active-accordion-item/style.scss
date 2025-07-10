@@ -11,6 +11,7 @@
     flex-direction: column;
 	gap: 0;
 	padding-left: 1.875rem;
+	padding-right: clamp(1.8125rem, 8.64vw + -.2121478873rem, 7.5625rem);
 
 
 	&::before {
@@ -24,7 +25,7 @@
         opacity: .3;
 	}
 
-	& > .content {
+	&_content {
 		display: grid;
 		grid-template-rows: 0fr;
 		overflow: hidden;
@@ -32,7 +33,7 @@
 		transition-timing-function: ease;
 		transition-duration: .5s;
 
-		& > .wrap {
+		&-wrap {
 			min-height: 0;
 		}
 	}
@@ -41,31 +42,31 @@
 		margin: 0;
 	}
 
-	.header-button {
-		width: 100%;
-		border: none;
-		background: transparent;
-		color: inherit;
-		cursor: pointer;
-		font-family: inherit;
-		font-size: inherit;
-		font-style: inherit;
-		font-weight: inherit;
-		letter-spacing: inherit;
-		line-height: inherit;
-		outline: none;
-		text-align: left;
-		padding: 0;
-	}
-
-	.header {
+	&_header {
 		opacity: .4;
+
+		button {
+			width: 100%;
+			border: none;
+			background: transparent;
+			color: inherit;
+			cursor: pointer;
+			font-family: inherit;
+			font-size: inherit;
+			font-style: inherit;
+			font-weight: inherit;
+			letter-spacing: inherit;
+			line-height: inherit;
+			outline: none;
+			text-align: left;
+			padding: 0;
+		}
 	}
 
 	&.active {
 		gap: 1.875rem;
 
-		& > .content {
+		.wp-block-srg-media-accordion-item_content {
 			grid-template-rows: 1fr;
 		}
 
@@ -81,7 +82,7 @@
 			animation: media-accordion-progress var(--animation-duration,8s) linear normal forwards;
 		}
 
-		.header {
+		.wp-block-srg-media-accordion-item_header {
 			opacity: 1;
 		}
 	}

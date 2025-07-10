@@ -8,6 +8,7 @@ import { useBlockProps, InnerBlocks } from '@wordpress/block-editor';
 import { Button } from '@wordpress/components';
 import { createBlock } from '@wordpress/blocks';
 import { useDispatch } from '@wordpress/data';
+import { useEffect } from '@wordpress/element';
 
 /**
  * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
@@ -28,8 +29,17 @@ const TEMPLATE = [ [ 'srg/media-accordion-item' ] ];
  *
  * @return {Element} Element to render.
  */
-export default function Edit( { clientId } ) {
+export default function Edit( { attributes, setAttributes, clientId } ) {
 	const { insertBlock } = useDispatch( 'core/block-editor' );
+
+	// Generate unique ID if it doesn't exist
+    useEffect(() => {
+        if ( ! attributes.uid) {
+            setAttributes({ 
+                uid: `accordion-${clientId.substr(0, 8)}` 
+            });
+        }
+    }, []);
 
 	return (
 		<div { ...useBlockProps() }>

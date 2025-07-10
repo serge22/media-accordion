@@ -11,12 +11,22 @@
   display: flex;
   flex-direction: row;
 }
-.wp-block-srg-media-accordion > .content {
+.wp-block-srg-media-accordion_content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+.wp-block-srg-media-accordion_content-container {
   display: flex;
   flex-direction: column;
-  flex: 1;
   gap: 1.875rem;
 }
-.wp-block-srg-media-accordion > .media-container {
+.wp-block-srg-media-accordion_media-container {
   flex: 1;
+  aspect-ratio: 1/1;
+}
+.wp-block-srg-media-accordion_media-container video {
+  width: 100%;
+  height: 100%;
 }

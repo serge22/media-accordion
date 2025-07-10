@@ -15,13 +15,19 @@ import { useBlockProps, InnerBlocks } from '@wordpress/block-editor';
  *
  * @return {Element} Element to render.
  */
-export default function save() {
+export default function save({attributes}) {
+	const blockProps = useBlockProps.save({
+        className: attributes.uid
+    });
+	const baseClass = blockProps.className.split(' ')[0];;
 	return (
-		<div { ...useBlockProps.save() }>
-			<div className="content">
-				<InnerBlocks.Content />
+		<div { ...blockProps }>
+			<div className={`${baseClass}_content`}>
+				<div className={`${baseClass}_content-container`}>
+					<InnerBlocks.Content />
+				</div>
 			</div>
-			<div className="media-container"></div>
+			<div className={`${baseClass}_media-container`}></div>
 		</div>
 	);
 }

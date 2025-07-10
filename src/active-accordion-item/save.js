@@ -15,12 +15,13 @@ import { useBlockProps, InnerBlocks } from '@wordpress/block-editor';
  *
  * @return {Element} Element to render.
  */
-export default function save( { attributes } ) {
+export default function save( { attributes  } ) {
+	const blockProps = useBlockProps.save({
+        style: { '--animation-duration': `${ attributes.duration }ms` }
+    });
+	const baseClass = blockProps.className;
 	return (
-		<div
-			{ ...useBlockProps.save() }
-			style={ { '--animation-duration': `${ attributes.duration }ms` } }
-		>
+		<div { ...blockProps }>
 			<template className="media-template">
 				{ attributes.mediaUrl &&
 					attributes.mime.startsWith( 'video/' ) && (
@@ -30,7 +31,6 @@ export default function save( { attributes } ) {
 							playsInline
 							loop
 							autoPlay
-							style={ { maxWidth: '100%', height: 'auto' } }
 						/>
 					) }
 
@@ -42,11 +42,11 @@ export default function save( { attributes } ) {
 						/>
 					) }
 			</template>
-			<h3 className="header">
-				<button className="header-button">{ attributes.title }</button>
+			<h3 className={`${baseClass}_header`}>
+				<button className={`${baseClass}_header-button`}>{ attributes.title }</button>
 			</h3>
-			<div className="content">
-				<div className="wrap">
+			<div className={`${baseClass}_content`}>
+				<div className={`${baseClass}_content-wrap`}>
 					<InnerBlocks.Content />
 				</div>
 			</div>

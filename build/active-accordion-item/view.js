@@ -48,8 +48,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const media = items[currentIndex].querySelector('.media-template');
         if (media) {
           const mediaElement = media.content.cloneNode(true);
-          accordion.querySelector('.media-container').innerHTML = '';
-          accordion.querySelector('.media-container').appendChild(mediaElement);
+          accordion.querySelector('.wp-block-srg-media-accordion_media-container').innerHTML = '';
+          accordion.querySelector('.wp-block-srg-media-accordion_media-container').appendChild(mediaElement);
         }
 
         // Get animation duration from CSS variable
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // Attach click event to each button
       items.forEach((item, idx) => {
-        const button = item.querySelector('.header-button');
+        const button = item.querySelector('.wp-block-srg-media-accordion-item_header-button');
         if (button) {
           button.addEventListener('click', function (e) {
             e.preventDefault();

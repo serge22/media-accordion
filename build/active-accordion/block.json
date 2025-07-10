@@ -7,6 +7,12 @@
   "category": "widgets",
   "icon": "list-view",
   "description": "An interactive block for displaying images and videos in a flexible, accordion-style layout.",
+  "attributes": {
+    "uid": {
+      "type": "string",
+      "default": ""
+    }
+  },
   "example": {},
   "supports": {
     "html": false

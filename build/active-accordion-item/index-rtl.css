@@ -9,7 +9,7 @@
 .wp-block-srg-media-accordion-item {
   border: 1px solid #CCC;
   margin-bottom: 1em;
-  padding-right: 0;
+  padding: 0;
 }
 .wp-block-srg-media-accordion-item::before {
   content: none;

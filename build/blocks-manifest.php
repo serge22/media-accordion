@@ -10,6 +10,12 @@ return array(
 		'category' => 'widgets',
 		'icon' => 'list-view',
 		'description' => 'An interactive block for displaying images and videos in a flexible, accordion-style layout.',
+		'attributes' => array(
+			'uid' => array(
+				'type' => 'string',
+				'default' => ''
+			)
+		),
 		'example' => array(
 			
 		),
