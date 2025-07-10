@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "srg/media-accordion",
+  "version": "0.1.0",
+  "title": "Media Accordion",
+  "category": "widgets",
+  "icon": "list-view",
+  "description": "An interactive block for displaying images and videos in a flexible, accordion-style layout.",
+  "example": {},
+  "supports": {
+    "html": false
+  },
+  "textdomain": "media-accordion",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": "file:./style-index.css",
+  "viewScript": "file:./view.js"
+}

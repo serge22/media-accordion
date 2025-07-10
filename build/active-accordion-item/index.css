@@ -1,0 +1,31 @@
+/*!**************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!./src/active-accordion-item/editor.scss ***!
+  \**************************************************************************************************************************************************************************************************************************************************************/
+/**
+ * The following styles get applied inside the editor only.
+ *
+ * Replace them with your own styles or remove the file completely.
+ */
+.wp-block-srg-media-accordion-item {
+  border: 1px solid #CCC;
+  margin-bottom: 1em;
+  padding-left: 0;
+}
+.wp-block-srg-media-accordion-item::before {
+  content: none;
+}
+.wp-block-srg-media-accordion-item > .header {
+  border-bottom: 1px solid #CCC;
+  opacity: 1;
+  padding: 0.5em;
+}
+.wp-block-srg-media-accordion-item > .header input {
+  width: 100%;
+  margin-bottom: 1em;
+  border: none;
+}
+.wp-block-srg-media-accordion-item .block-editor-inner-blocks {
+  padding: 0.5em;
+}
+
+/*# sourceMappingURL=index.css.map*/
