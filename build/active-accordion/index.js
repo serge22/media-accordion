@@ -219,6 +219,32 @@ function save({
       })
     }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
       className: `${baseClass}_media-container`
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+      className: `${baseClass}_pause-btn-container`,
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("button", {
+        "aria-label": "Pause",
+        "aria-disabled": "false",
+        className: `${baseClass}_pause-btn`,
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("span", {
+          className: `${baseClass}_pause-btn-wrapper`,
+          style: "width:24px;height:24px",
+          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("svg", {
+            width: "24",
+            height: "24",
+            viewBox: "0 0 24 24",
+            fill: "none",
+            role: "presentation",
+            focusable: "false",
+            xmlns: "http://www.w3.org/2000/svg",
+            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("path", {
+              "fill-rule": "evenodd",
+              "clip-rule": "evenodd",
+              d: "M10 19H6L6 5L10 5L10 19ZM14 19L14 5L18 5V19H14Z",
+              fill: "#ffffffff"
+            })
+          })
+        })
+      })
     })]
   });
 }

@@ -8,7 +8,7 @@
   \**********************************************/
 /***/ ((module) => {
 
-module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"srg/media-accordion-item","version":"0.1.0","title":"Media Accordion Item","parent":["srg/media-accordion"],"category":"widgets","icon":"smiley","description":"Example block scaffolded with Create Block tool.","attributes":{"title":{"type":"string","default":""},"duration":{"type":"number","default":3000},"mediaId":{"type":"number"},"mediaUrl":{"type":"string","default":""},"mime":{"type":"string","default":""}},"example":{},"supports":{"html":false},"textdomain":"media-accordion-item","editorScript":"file:./index.js","editorStyle":"file:./index.css","style":"file:./style-index.css","viewScript":"file:./view.js"}');
+module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"srg/media-accordion-item","version":"0.1.0","title":"Media Accordion Item","parent":["srg/media-accordion"],"category":"widgets","icon":"smiley","description":"Example block scaffolded with Create Block tool.","attributes":{"title":{"type":"string","default":""},"duration":{"type":"number","default":3000},"mediaId":{"type":"number"},"mediaUrl":{"type":"string","default":""},"mime":{"type":"string","default":""}},"example":{},"supports":{"html":false},"textdomain":"media-accordion-item","editorScript":"file:./index.js","editorStyle":"file:./index.css"}');
 
 /***/ }),
 
@@ -290,8 +290,7 @@ function save({
         src: attributes.mediaUrl,
         muted: true,
         playsInline: true,
-        loop: true,
-        autoPlay: true
+        loop: true
       }), attributes.mediaUrl && attributes.mime.startsWith('image/') && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("img", {
         src: attributes.mediaUrl,
         style: {

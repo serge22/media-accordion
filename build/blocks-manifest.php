@@ -69,8 +69,6 @@ return array(
 		),
 		'textdomain' => 'media-accordion-item',
 		'editorScript' => 'file:./index.js',
-		'editorStyle' => 'file:./index.css',
-		'style' => 'file:./style-index.css',
-		'viewScript' => 'file:./view.js'
+		'editorStyle' => 'file:./index.css'
 	)
 );

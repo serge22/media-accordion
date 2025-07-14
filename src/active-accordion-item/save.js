@@ -30,7 +30,6 @@ export default function save( { attributes  } ) {
 							muted
 							playsInline
 							loop
-							autoPlay
 						/>
 					) }
 
