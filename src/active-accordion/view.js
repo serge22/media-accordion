@@ -161,7 +161,7 @@ class MediaAccordion {
 		this.pauseButton = this.accordion.querySelector(CONFIG.SELECTORS.PAUSE_BUTTON);
 		this.contentContainer = this.accordion.querySelector(CONFIG.SELECTORS.CONTENT_CONTAINER);
 		
-		this.currentIndex = null;
+		this.currentIndex = 0;
 		this.timeoutId = null;
 		this.isPaused = false;
 		this.remainingTime = 0;
@@ -185,7 +185,8 @@ class MediaAccordion {
 			return;
 		}
 
-		this.initSlider();
+		Utils.isLandscapeOrSquare() || this.initSlider();
+
 		this.attachEventListeners();
 		this.showItem(0);
 	}
@@ -204,15 +205,25 @@ class MediaAccordion {
 
 		// Initialize KeenSlider
 		this.slider = new KeenSlider(this.contentContainer, {
-			disabled: Utils.isLandscapeOrSquare(),
+			// disabled: Utils.isLandscapeOrSquare(),
+			initial: this.currentIndex,
 			slides: {
 				perView: 1,
 				spacing: CONFIG.DEFAULTS.SLIDER_SPACING,
 			},
 			slideChanged: (slider) => {
-				this.showItem(slider.track.details.abs);
+				this.showItem(slider.track.details.abs, false);
 			},
 		}, [createNavigationPlugin]);
+	}
+
+	destroySlider() {
+		if (this.slider) {
+			this.slider.destroy();
+			this.slider = null;
+			this.contentContainer.classList.remove('keen-slider');
+			this.items.forEach(item => item.classList.remove('keen-slider__slide'));
+		}
 	}
 
 	/**
@@ -257,7 +268,7 @@ class MediaAccordion {
 		}
 
 		const index = Array.from(this.items).indexOf(item);
-		if (index !== -1) {
+		if (index !== -1 && index !== this.currentIndex) {
 			this.showItem(index);
 		}
 	}
@@ -266,26 +277,28 @@ class MediaAccordion {
 	 * Handle orientation/resize changes
 	 */
 	handleOrientationChange() {
-		if (!this.slider) return;
-
-		const newOptions = {
-			...this.slider.options,
-			disabled: Utils.isLandscapeOrSquare(),
-		};
-		this.slider.update(newOptions);
+		if (Utils.isLandscapeOrSquare()) {
+			// Destroy slider if in landscape or square mode
+			this.destroySlider();
+		} else {
+			// Initialize slider if not already done
+			if (!this.slider) {
+				this.initSlider();
+			}
+		}
 	}
 
 	/**
 	 * Show a specific accordion item
 	 * @param {number} index - The index of the item to show
 	 */
-	showItem(index) {
-		if (index < 0 || index >= this.items.length || this.currentIndex === index) {
+	showItem(index, updateSlider = true) {
+		if (index < 0 || index >= this.items.length) {
 			return;
 		}
 
 		this.clearTimer();
-		this.updateActiveItem(index);
+		this.updateActiveItem(index, updateSlider);
 		this.updateMediaContent();
 		this.scheduleNextItem();
 	}
@@ -294,7 +307,7 @@ class MediaAccordion {
 	 * Update the active item class
 	 * @param {number} index - The index of the item to activate
 	 */
-	updateActiveItem(index) {
+	updateActiveItem(index, updateSlider = true) {
 		// Remove active and paused classes from all items
 		this.items.forEach(item => {
 			item.classList.remove(CONFIG.SELECTORS.ACTIVE_CLASS, CONFIG.SELECTORS.PAUSED_CLASS);
@@ -309,8 +322,8 @@ class MediaAccordion {
 		}
 
 		// Update slider position if needed
-		if (this.slider && this.slider.track.details.abs !== index) {
-			this.slider.track.to(index);
+		if (this.slider && updateSlider) {
+			this.slider.moveToIdx(index);
 		}
 
 		this.currentIndex = index;
