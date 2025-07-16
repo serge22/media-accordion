@@ -6,6 +6,7 @@
  * - Automatic progression with timing
  * - Pause/resume functionality
  * - Media content display
+ * - KeenSlider integration for mobile devices
  * 
  * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-metadata/#view-script
  */
@@ -14,47 +15,151 @@ import KeenSlider from 'keen-slider'
 import 'keen-slider/keen-slider.min.css'
 
 /**
- * MediaAccordion class handles all accordion functionality
+ * Constants and configuration
  */
-class MediaAccordion {
-	/**
-	 * CSS selectors used throughout the application
-	 */
-	static SELECTORS = {
+const CONFIG = {
+	SELECTORS: {
 		ACCORDION: '.wp-block-srg-media-accordion',
 		ACCORDION_ITEM: '.wp-block-srg-media-accordion-item',
 		ITEM_BUTTON: '.wp-block-srg-media-accordion-item_header-button',
 		MEDIA_CONTAINER: '.wp-block-srg-media-accordion_media-wrap',
 		MEDIA_TEMPLATE: '.media-template',
 		PAUSE_BUTTON: '.wp-block-srg-media-accordion_pause-btn',
+		CONTENT_CONTAINER: '.wp-block-srg-media-accordion_content-container',
 		ACTIVE_CLASS: 'active',
 		PAUSED_CLASS: 'wp-block-srg-media-accordion-item--paused'
-	};
-
-	/**
-	 * Default configuration
-	 */
-	static DEFAULTS = {
+	},
+	DEFAULTS: {
 		ANIMATION_DURATION: 5000, // 5 seconds fallback
-		CSS_DURATION_VAR: '--animation-duration'
-	};
-
-	/**
-	 * SVG icons for pause/play buttons
-	 */
-	static ICONS = {
+		CSS_DURATION_VAR: '--animation-duration',
+		SLIDER_SPACING: 20,
+		RESIZE_DEBOUNCE: 500
+	},
+	ICONS: {
 		PLAY: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" role="presentation" focusable="false" xmlns="http://www.w3.org/2000/svg"><path d="M8 20L20 12L8 4L8 20Z" fill="#ffffffff"></path></svg>',
 		PAUSE: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" role="presentation" focusable="false" xmlns="http://www.w3.org/2000/svg"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" fill="#ffffffff"></path></svg>'
+	}
+};
+
+/**
+ * Utility functions
+ */
+const Utils = {
+	/**
+	 * Check if screen has min-aspect-ratio: 1/1 (landscape or square)
+	 * @returns {boolean} True if aspect ratio is 1/1 or wider
+	 */
+	isLandscapeOrSquare() {
+		return window.matchMedia('(min-aspect-ratio: 1/1)').matches;
+	},
+
+	/**
+	 * Debounce function execution
+	 * @param {Function} func - Function to debounce
+	 * @param {number} delay - Delay in milliseconds
+	 * @returns {Function} Debounced function
+	 */
+	debounce(func, delay) {
+		let timeoutId;
+		return function(...args) {
+			clearTimeout(timeoutId);
+			timeoutId = setTimeout(() => func.apply(this, args), delay);
+		};
+	}
+};
+
+/**
+ * KeenSlider navigation plugin
+ * Adds dot navigation below the slider
+ */
+function createNavigationPlugin(slider) {
+	let wrapper, dots;
+
+	const createDiv = (className) => {
+		const div = document.createElement('div');
+		className.split(' ').forEach(name => div.classList.add(name));
+		return div;
 	};
+
+	const removeElement = (element) => {
+		if (element && element.parentNode) {
+			element.parentNode.removeChild(element);
+		}
+	};
+
+	const createWrapper = (remove = false) => {
+		if (remove) {
+			if (wrapper) {
+				const parent = wrapper.parentNode;
+				while (wrapper.firstChild) {
+					parent.insertBefore(wrapper.firstChild, wrapper);
+				}
+				removeElement(wrapper);
+			}
+			return;
+		}
+		wrapper = createDiv('keen-slider_navigation-wrapper');
+		slider.container.parentNode.appendChild(wrapper);
+		wrapper.appendChild(slider.container);
+	};
+
+	const createDots = (remove = false) => {
+		if (remove) {
+			removeElement(dots);
+			return;
+		}
+		dots = createDiv('dots');
+		slider.track.details.slides.forEach((_, idx) => {
+			const dot = createDiv('dot');
+			dot.addEventListener('click', () => slider.moveToIdx(idx));
+			dots.appendChild(dot);
+		});
+		wrapper.appendChild(dots);
+	};
+
+	const updateDots = () => {
+		if (!dots) return;
+		const activeSlide = slider.track.details.rel;
+		Array.from(dots.children).forEach((dot, idx) => {
+			dot.classList.toggle('dot--active', idx === activeSlide);
+		});
+	};
+
+	const createMarkup = (remove = false) => {
+		createWrapper(remove);
+		createDots(remove);
+	};
+
+	// Event listeners
+	slider.on('created', () => {
+		createMarkup();
+		updateDots();
+	});
+
+	slider.on('optionsChanged', () => {
+		createMarkup(true);
+		createMarkup();
+		updateDots();
+	});
+
+	slider.on('slideChanged', updateDots);
+	slider.on('destroyed', () => createMarkup(true));
+}
+
+/**
+ * MediaAccordion class handles all accordion functionality
+ */
+class MediaAccordion {
 	/**
 	 * Initialize the accordion
 	 * @param {HTMLElement} element - The accordion container element
 	 */
 	constructor(element) {
 		this.accordion = element;
-		this.items = this.accordion.querySelectorAll(MediaAccordion.SELECTORS.ACCORDION_ITEM);
-		this.mediaContainer = this.accordion.querySelector(MediaAccordion.SELECTORS.MEDIA_CONTAINER);
-		this.pauseButton = this.accordion.querySelector(MediaAccordion.SELECTORS.PAUSE_BUTTON);
+		this.items = this.accordion.querySelectorAll(CONFIG.SELECTORS.ACCORDION_ITEM);
+		this.mediaContainer = this.accordion.querySelector(CONFIG.SELECTORS.MEDIA_CONTAINER);
+		this.pauseButton = this.accordion.querySelector(CONFIG.SELECTORS.PAUSE_BUTTON);
+		this.contentContainer = this.accordion.querySelector(CONFIG.SELECTORS.CONTENT_CONTAINER);
 		
 		this.currentIndex = 0;
 		this.timeoutId = null;
@@ -62,6 +167,12 @@ class MediaAccordion {
 		this.remainingTime = 0;
 		this.startTime = 0;
 		this.duration = 0;
+		this.slider = null;
+		this.resizeTimeout = null;
+		
+		// Bind methods
+		this.handleClick = this.handleClick.bind(this);
+		this.handleOrientationChange = Utils.debounce(this.handleOrientationChange.bind(this), CONFIG.DEFAULTS.RESIZE_DEBOUNCE);
 		
 		this.init();
 	}
@@ -74,59 +185,94 @@ class MediaAccordion {
 			return;
 		}
 
-		if (this.isLandscapeOrSquare()) {
-			this.attachEventListeners();
-			this.showItem(0);
-		}
-		else {
-			// Initialize KeenSlider
-			const container = this.accordion.querySelector('.wp-block-srg-media-accordion_content-container');
-			container.classList.add('keen-slider');
-			this.items.forEach(item => {
-				item.classList.add('keen-slider__slide');
-			});
-
-			this.slider = new KeenSlider(container, {
-				slides: {
-					perView: 1,
-					spacing: 20
-				},
-			});
-		}
-
-		
+		this.initSlider();
+		this.attachEventListeners();
+		this.showItem(0);
 	}
 
 	/**
-	 * Attach event listeners using event delegation
+	 * Initialize KeenSlider for mobile devices
 	 */
-	attachEventListeners() {
-		// Use event delegation for all clicks within the accordion
-		this.accordion.addEventListener('click', this.handleClick.bind(this));
+	initSlider() {
+		if (!this.contentContainer) {
+			return;
+		}
+
+		// Add slider classes
+		this.contentContainer.classList.add('keen-slider');
+		this.items.forEach(item => item.classList.add('keen-slider__slide'));
+
+		// Initialize KeenSlider
+		this.slider = new KeenSlider(this.contentContainer, {
+			disabled: Utils.isLandscapeOrSquare(),
+			slides: {
+				perView: 1,
+				spacing: CONFIG.DEFAULTS.SLIDER_SPACING,
+			},
+			slideChanged: (slider) => {
+				this.showItem(slider.track.details.abs);
+			},
+		}, [createNavigationPlugin]);
 	}
 
+	/**
+	 * Attach event listeners
+	 */
+	attachEventListeners() {
+		this.accordion.addEventListener('click', this.handleClick);
+		window.addEventListener('orientationchange', this.handleOrientationChange);
+		window.addEventListener('resize', this.handleOrientationChange);
+	}
+
+	/**
+	 * Handle click events using event delegation
+	 * @param {Event} e - The click event
+	 */
 	handleClick(e) {
 		e.preventDefault();
-			
+		
 		// Handle accordion item button clicks
-		const itemButton = e.target.closest(MediaAccordion.SELECTORS.ITEM_BUTTON);
+		const itemButton = e.target.closest(CONFIG.SELECTORS.ITEM_BUTTON);
 		if (itemButton) {
-			const item = itemButton.closest(MediaAccordion.SELECTORS.ACCORDION_ITEM);
-			if (item) {
-				const index = Array.from(this.items).indexOf(item);
-				if (index !== -1) {
-					this.showItem(index);
-				}
-			}
+			this.handleItemClick(itemButton);
 			return;
 		}
 		
 		// Handle pause/resume button clicks
-		const pauseButton = e.target.closest(MediaAccordion.SELECTORS.PAUSE_BUTTON);
+		const pauseButton = e.target.closest(CONFIG.SELECTORS.PAUSE_BUTTON);
 		if (pauseButton) {
 			this.togglePause();
 			return;
 		}
+	}
+
+	/**
+	 * Handle accordion item button click
+	 * @param {HTMLElement} itemButton - The clicked item button
+	 */
+	handleItemClick(itemButton) {
+		const item = itemButton.closest(CONFIG.SELECTORS.ACCORDION_ITEM);
+		if (!item || !Utils.isLandscapeOrSquare()) {
+			return;
+		}
+
+		const index = Array.from(this.items).indexOf(item);
+		if (index !== -1) {
+			this.showItem(index);
+		}
+	}
+
+	/**
+	 * Handle orientation/resize changes
+	 */
+	handleOrientationChange() {
+		if (!this.slider) return;
+
+		const newOptions = {
+			...this.slider.options,
+			disabled: Utils.isLandscapeOrSquare(),
+		};
+		this.slider.update(newOptions);
 	}
 
 	/**
@@ -149,11 +295,22 @@ class MediaAccordion {
 	 * @param {number} index - The index of the item to activate
 	 */
 	updateActiveItem(index) {
-		this.items.forEach(item => item.classList.remove(MediaAccordion.SELECTORS.ACTIVE_CLASS, MediaAccordion.SELECTORS.PAUSED_CLASS));
-		this.items[index].classList.add(MediaAccordion.SELECTORS.ACTIVE_CLASS);
+		// Remove active and paused classes from all items
+		this.items.forEach(item => {
+			item.classList.remove(CONFIG.SELECTORS.ACTIVE_CLASS, CONFIG.SELECTORS.PAUSED_CLASS);
+		});
 
+		// Add active class to current item
+		this.items[index].classList.add(CONFIG.SELECTORS.ACTIVE_CLASS);
+
+		// Add paused class if needed
 		if (this.isPaused) {
-			this.items[index].classList.add(MediaAccordion.SELECTORS.PAUSED_CLASS);
+			this.items[index].classList.add(CONFIG.SELECTORS.PAUSED_CLASS);
+		}
+
+		// Update slider position if needed
+		if (this.slider && this.slider.track.details.abs !== index) {
+			this.slider.moveToIdx(index);
 		}
 
 		this.currentIndex = index;
@@ -167,19 +324,21 @@ class MediaAccordion {
 			return;
 		}
 
-		const mediaTemplate = this.items[this.currentIndex].querySelector(MediaAccordion.SELECTORS.MEDIA_TEMPLATE);
-		if (mediaTemplate && mediaTemplate.content) {
-			const mediaElement = mediaTemplate.content.cloneNode(true);
-			
-			// Handle video autoplay based on pause state
-			const video = mediaElement.querySelector('video');
-			if (video) {
-				video.autoplay = !this.isPaused;
-			}
-
-			this.mediaContainer.innerHTML = '';
-			this.mediaContainer.appendChild(mediaElement);
+		const mediaTemplate = this.items[this.currentIndex].querySelector(CONFIG.SELECTORS.MEDIA_TEMPLATE);
+		if (!mediaTemplate || !mediaTemplate.content) {
+			return;
 		}
+
+		const mediaElement = mediaTemplate.content.cloneNode(true);
+		
+		// Handle video autoplay based on pause state
+		const video = mediaElement.querySelector('video');
+		if (video) {
+			video.autoplay = !this.isPaused;
+		}
+
+		this.mediaContainer.innerHTML = '';
+		this.mediaContainer.appendChild(mediaElement);
 	}
 
 	/**
@@ -205,10 +364,10 @@ class MediaAccordion {
 	 */
 	getAnimationDuration() {
 		const currentItem = this.items[this.currentIndex];
-		const duration = getComputedStyle(currentItem).getPropertyValue(MediaAccordion.DEFAULTS.CSS_DURATION_VAR);
+		const duration = getComputedStyle(currentItem).getPropertyValue(CONFIG.DEFAULTS.CSS_DURATION_VAR);
 		
 		if (!duration) {
-			return MediaAccordion.DEFAULTS.ANIMATION_DURATION;
+			return CONFIG.DEFAULTS.ANIMATION_DURATION;
 		}
 
 		return duration.includes('ms') ? parseFloat(duration) : parseFloat(duration) * 1000;
@@ -224,7 +383,15 @@ class MediaAccordion {
 			this.pause();
 		}
 
-		// Handle video autoplay based on pause state
+		this.handleVideoPlayback();
+	}
+
+	/**
+	 * Handle video playback based on pause state
+	 */
+	handleVideoPlayback() {
+		if (!this.mediaContainer) return;
+
 		const video = this.mediaContainer.querySelector('video');
 		if (video) {
 			this.isPaused ? video.pause() : video.play();
@@ -248,7 +415,7 @@ class MediaAccordion {
 
 		// Update UI
 		this.updatePauseButton();
-		this.items[this.currentIndex].classList.add(MediaAccordion.SELECTORS.PAUSED_CLASS);
+		this.items[this.currentIndex].classList.add(CONFIG.SELECTORS.PAUSED_CLASS);
 	}
 
 	/**
@@ -269,7 +436,7 @@ class MediaAccordion {
 
 		// Update UI
 		this.updatePauseButton();
-		this.items[this.currentIndex].classList.remove(MediaAccordion.SELECTORS.PAUSED_CLASS);
+		this.items[this.currentIndex].classList.remove(CONFIG.SELECTORS.PAUSED_CLASS);
 	}
 
 	/**
@@ -280,7 +447,7 @@ class MediaAccordion {
 			return;
 		}
 
-		this.pauseButton.innerHTML = this.isPaused ? MediaAccordion.ICONS.PLAY : MediaAccordion.ICONS.PAUSE;
+		this.pauseButton.innerHTML = this.isPaused ? CONFIG.ICONS.PLAY : CONFIG.ICONS.PAUSE;
 		this.pauseButton.setAttribute('aria-label', this.isPaused ? 'Resume' : 'Pause');
 	}
 
@@ -299,27 +466,35 @@ class MediaAccordion {
 	 */
 	destroy() {
 		this.clearTimer();
-
+		
 		// Remove event listeners
-        if (this.accordion) {
-            this.accordion.removeEventListener('click', this.handleClick);
-        }
-	}
-
-	/**
-	 * Check if screen has min-aspect-ratio: 1/1 (landscape or square)
-	 * @returns {boolean} True if aspect ratio is 1/1 or wider
-	 */
-	isLandscapeOrSquare() {
-		return window.matchMedia('(min-aspect-ratio: 1/1)').matches;
+		if (this.accordion) {
+			this.accordion.removeEventListener('click', this.handleClick);
+		}
+		
+		window.removeEventListener('orientationchange', this.handleOrientationChange);
+		window.removeEventListener('resize', this.handleOrientationChange);
+		
+		// Destroy slider
+		if (this.slider) {
+			this.slider.destroy();
+			this.slider = null;
+		}
+		
+		// Clear timeout
+		if (this.resizeTimeout) {
+			clearTimeout(this.resizeTimeout);
+			this.resizeTimeout = null;
+		}
 	}
 }
+
 
 /**
  * Initialize all accordions on the page
  */
 function initializeAccordions() {
-	const accordions = document.querySelectorAll(MediaAccordion.SELECTORS.ACCORDION);
+	const accordions = document.querySelectorAll(CONFIG.SELECTORS.ACCORDION);
 	accordions.forEach(accordion => {
 		new MediaAccordion(accordion);
 	});
