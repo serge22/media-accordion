@@ -161,7 +161,7 @@ class MediaAccordion {
 		this.pauseButton = this.accordion.querySelector(CONFIG.SELECTORS.PAUSE_BUTTON);
 		this.contentContainer = this.accordion.querySelector(CONFIG.SELECTORS.CONTENT_CONTAINER);
 		
-		this.currentIndex = 0;
+		this.currentIndex = null;
 		this.timeoutId = null;
 		this.isPaused = false;
 		this.remainingTime = 0;
@@ -280,7 +280,7 @@ class MediaAccordion {
 	 * @param {number} index - The index of the item to show
 	 */
 	showItem(index) {
-		if (index < 0 || index >= this.items.length) {
+		if (index < 0 || index >= this.items.length || this.currentIndex === index) {
 			return;
 		}
 
@@ -310,7 +310,7 @@ class MediaAccordion {
 
 		// Update slider position if needed
 		if (this.slider && this.slider.track.details.abs !== index) {
-			this.slider.moveToIdx(index);
+			this.slider.track.to(index);
 		}
 
 		this.currentIndex = index;
