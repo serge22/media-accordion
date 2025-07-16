@@ -27,15 +27,19 @@ export default function save({attributes}) {
 					<InnerBlocks.Content />
 				</div>
 			</div>
-			<div className={`${baseClass}_media-container`}></div>
+			
+			<div className={`${baseClass}_media-container`}>
+				<div className={`${baseClass}_media-wrap`}></div>
 
-			<div className={`${baseClass}_pause-btn-container`}>
-				<button aria-label="Pause" aria-disabled="false" className={`${baseClass}_pause-btn`}>
-					<span className={`${baseClass}_pause-btn-wrapper`} style="width:24px;height:24px">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" role="presentation" focusable="false" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 19H6L6 5L10 5L10 19ZM14 19L14 5L18 5V19H14Z" fill="#ffffffff"></path></svg>
-					</span>
-				</button>
+				<div className={`${baseClass}_pause-btn-container`}>
+					<button aria-label="Pause" aria-disabled="false" className={`${baseClass}_pause-btn`}>
+						<span className={`${baseClass}_pause-btn-wrapper`} style="width:24px;height:24px">
+							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" role="presentation" focusable="false" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M10 19H6L6 5L10 5L10 19ZM14 19L14 5L18 5V19H14Z" fill="#ffffffff"></path></svg>
+						</span>
+					</button>
+				</div>
 			</div>
+
 		</div>
 	);
 }

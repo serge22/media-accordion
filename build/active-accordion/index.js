@@ -8,7 +8,7 @@
   \*****************************************/
 /***/ ((module) => {
 
-module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"srg/media-accordion","version":"0.1.0","title":"Media Accordion","category":"widgets","icon":"list-view","description":"An interactive block for displaying images and videos in a flexible, accordion-style layout.","attributes":{"uid":{"type":"string","default":""}},"example":{},"supports":{"html":false},"textdomain":"media-accordion","editorScript":"file:./index.js","editorStyle":"file:./index.css","style":"file:./style-index.css","viewScript":"file:./view.js"}');
+module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"srg/media-accordion","version":"0.1.0","title":"Media Accordion","category":"widgets","icon":"list-view","description":"An interactive block for displaying images and videos in a flexible, accordion-style layout.","attributes":{"uid":{"type":"string","default":""}},"example":{},"supports":{"html":false},"textdomain":"media-accordion","editorScript":"file:./index.js","editorStyle":"file:./index.css","style":"file:./style-index.css","viewScript":"file:./view.js","viewStyle":"file:./view.css"}');
 
 /***/ }),
 
@@ -217,34 +217,37 @@ function save({
         className: `${baseClass}_content-container`,
         children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.InnerBlocks.Content, {})
       })
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
-      className: `${baseClass}_media-container`
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
-      className: `${baseClass}_pause-btn-container`,
-      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("button", {
-        "aria-label": "Pause",
-        "aria-disabled": "false",
-        className: `${baseClass}_pause-btn`,
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("span", {
-          className: `${baseClass}_pause-btn-wrapper`,
-          style: "width:24px;height:24px",
-          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("svg", {
-            width: "24",
-            height: "24",
-            viewBox: "0 0 24 24",
-            fill: "none",
-            role: "presentation",
-            focusable: "false",
-            xmlns: "http://www.w3.org/2000/svg",
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("path", {
-              "fill-rule": "evenodd",
-              "clip-rule": "evenodd",
-              d: "M10 19H6L6 5L10 5L10 19ZM14 19L14 5L18 5V19H14Z",
-              fill: "#ffffffff"
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxs)("div", {
+      className: `${baseClass}_media-container`,
+      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+        className: `${baseClass}_media-wrap`
+      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("div", {
+        className: `${baseClass}_pause-btn-container`,
+        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("button", {
+          "aria-label": "Pause",
+          "aria-disabled": "false",
+          className: `${baseClass}_pause-btn`,
+          children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("span", {
+            className: `${baseClass}_pause-btn-wrapper`,
+            style: "width:24px;height:24px",
+            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("svg", {
+              width: "24",
+              height: "24",
+              viewBox: "0 0 24 24",
+              fill: "none",
+              role: "presentation",
+              focusable: "false",
+              xmlns: "http://www.w3.org/2000/svg",
+              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_1__.jsx)("path", {
+                "fill-rule": "evenodd",
+                "clip-rule": "evenodd",
+                d: "M10 19H6L6 5L10 5L10 19ZM14 19L14 5L18 5V19H14Z",
+                fill: "#ffffffff"
+              })
             })
           })
         })
-      })
+      })]
     })]
   });
 }

@@ -10,6 +10,9 @@
  * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-metadata/#view-script
  */
 
+import KeenSlider from 'keen-slider'
+import 'keen-slider/keen-slider.min.css'
+
 /**
  * MediaAccordion class handles all accordion functionality
  */
@@ -21,7 +24,7 @@ class MediaAccordion {
 		ACCORDION: '.wp-block-srg-media-accordion',
 		ACCORDION_ITEM: '.wp-block-srg-media-accordion-item',
 		ITEM_BUTTON: '.wp-block-srg-media-accordion-item_header-button',
-		MEDIA_CONTAINER: '.wp-block-srg-media-accordion_media-container',
+		MEDIA_CONTAINER: '.wp-block-srg-media-accordion_media-wrap',
 		MEDIA_TEMPLATE: '.media-template',
 		PAUSE_BUTTON: '.wp-block-srg-media-accordion_pause-btn',
 		ACTIVE_CLASS: 'active',
@@ -71,8 +74,27 @@ class MediaAccordion {
 			return;
 		}
 
-		this.attachEventListeners();
-		this.showItem(0);
+		if (this.isLandscapeOrSquare()) {
+			this.attachEventListeners();
+			this.showItem(0);
+		}
+		else {
+			// Initialize KeenSlider
+			const container = this.accordion.querySelector('.wp-block-srg-media-accordion_content-container');
+			container.classList.add('keen-slider');
+			this.items.forEach(item => {
+				item.classList.add('keen-slider__slide');
+			});
+
+			this.slider = new KeenSlider(container, {
+				slides: {
+					perView: 1,
+					spacing: 20
+				},
+			});
+		}
+
+		
 	}
 
 	/**
@@ -80,29 +102,31 @@ class MediaAccordion {
 	 */
 	attachEventListeners() {
 		// Use event delegation for all clicks within the accordion
-		this.accordion.addEventListener('click', (e) => {
-			e.preventDefault();
+		this.accordion.addEventListener('click', this.handleClick.bind(this));
+	}
+
+	handleClick(e) {
+		e.preventDefault();
 			
-			// Handle accordion item button clicks
-			const itemButton = e.target.closest(MediaAccordion.SELECTORS.ITEM_BUTTON);
-			if (itemButton) {
-				const item = itemButton.closest(MediaAccordion.SELECTORS.ACCORDION_ITEM);
-				if (item) {
-					const index = Array.from(this.items).indexOf(item);
-					if (index !== -1) {
-						this.showItem(index);
-					}
+		// Handle accordion item button clicks
+		const itemButton = e.target.closest(MediaAccordion.SELECTORS.ITEM_BUTTON);
+		if (itemButton) {
+			const item = itemButton.closest(MediaAccordion.SELECTORS.ACCORDION_ITEM);
+			if (item) {
+				const index = Array.from(this.items).indexOf(item);
+				if (index !== -1) {
+					this.showItem(index);
 				}
-				return;
 			}
-			
-			// Handle pause/resume button clicks
-			const pauseButton = e.target.closest(MediaAccordion.SELECTORS.PAUSE_BUTTON);
-			if (pauseButton) {
-				this.togglePause();
-				return;
-			}
-		});
+			return;
+		}
+		
+		// Handle pause/resume button clicks
+		const pauseButton = e.target.closest(MediaAccordion.SELECTORS.PAUSE_BUTTON);
+		if (pauseButton) {
+			this.togglePause();
+			return;
+		}
 	}
 
 	/**
@@ -275,7 +299,19 @@ class MediaAccordion {
 	 */
 	destroy() {
 		this.clearTimer();
-		// Remove event listeners would go here if needed
+
+		// Remove event listeners
+        if (this.accordion) {
+            this.accordion.removeEventListener('click', this.handleClick);
+        }
+	}
+
+	/**
+	 * Check if screen has min-aspect-ratio: 1/1 (landscape or square)
+	 * @returns {boolean} True if aspect ratio is 1/1 or wider
+	 */
+	isLandscapeOrSquare() {
+		return window.matchMedia('(min-aspect-ratio: 1/1)').matches;
 	}
 }
 
