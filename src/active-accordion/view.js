@@ -65,6 +65,24 @@ const Utils = {
 			clearTimeout(timeoutId);
 			timeoutId = setTimeout(() => func.apply(this, args), delay);
 		};
+	},
+
+	/**
+	 * Check if element is currently visible in the viewport
+	 * @param {HTMLElement} element - Element to check
+	 * @returns {boolean} True if element is visible
+	 */
+	isElementVisible(element) {
+		if (!element) return false;
+		const rect = element.getBoundingClientRect();
+		const style = getComputedStyle(element);
+		return (
+			rect.width > 0 &&
+			rect.height > 0 &&
+			style.display !== 'none' &&
+			style.visibility !== 'hidden' &&
+			style.opacity !== '0'
+		);
 	}
 };
 
@@ -168,6 +186,7 @@ class MediaAccordion {
 		this.startTime = 0;
 		this.duration = 0;
 		this.slider = null;
+		this.intersectionObserver = null;
 		this.resizeTimeout = null;
 		
 		// Bind methods
@@ -185,17 +204,52 @@ class MediaAccordion {
 			return;
 		}
 
-		Utils.isLandscapeOrSquare() || this.initSlider();
-
 		this.attachEventListeners();
 		this.showItem(0);
+
+		// Check if we need slider and if accordion is visible
+		if (!Utils.isLandscapeOrSquare()) {
+			if (Utils.isElementVisible(this.accordion)) {
+				this.initSlider();
+			} else {
+				this.setupVisibilityObserver();
+			}
+		}
+	}
+
+	/**
+	 * Setup intersection observer to detect when accordion becomes visible
+	 */
+	setupVisibilityObserver() {
+		if (!this.intersectionObserver) {
+			this.intersectionObserver = new IntersectionObserver((entries) => {
+				entries.forEach(entry => {
+					if (entry.isIntersecting && Utils.isElementVisible(this.accordion)) {
+						this.initSlider();
+						this.intersectionObserver.disconnect();
+					}
+				});
+			}, {
+				root: null,
+				rootMargin: '0px',
+				threshold: 0.1
+			});
+		}
+		
+		this.intersectionObserver.observe(this.accordion);
 	}
 
 	/**
 	 * Initialize KeenSlider for mobile devices
 	 */
 	initSlider() {
-		if (!this.contentContainer) {
+		if (!this.contentContainer || this.slider) {
+			return;
+		}
+
+		// Double-check visibility before initialization
+		if (!Utils.isElementVisible(this.accordion)) {
+			this.setupVisibilityObserver();
 			return;
 		}
 
@@ -205,7 +259,6 @@ class MediaAccordion {
 
 		// Initialize KeenSlider
 		this.slider = new KeenSlider(this.contentContainer, {
-			// disabled: Utils.isLandscapeOrSquare(),
 			initial: this.currentIndex,
 			slides: {
 				perView: 1,
@@ -223,6 +276,16 @@ class MediaAccordion {
 			this.slider = null;
 			this.contentContainer.classList.remove('keen-slider');
 			this.items.forEach(item => item.classList.remove('keen-slider__slide'));
+		}
+	}
+
+	/**
+	 * Refresh slider dimensions (useful when tab becomes visible)
+	 */
+	refreshSlider() {
+		if (this.slider) {
+			// Force slider to recalculate dimensions
+			this.slider.update();
 		}
 	}
 
@@ -281,9 +344,16 @@ class MediaAccordion {
 			// Destroy slider if in landscape or square mode
 			this.destroySlider();
 		} else {
-			// Initialize slider if not already done
+			// Initialize slider if not already done and accordion is visible
 			if (!this.slider) {
-				this.initSlider();
+				if (Utils.isElementVisible(this.accordion)) {
+					this.initSlider();
+				} else {
+					this.setupVisibilityObserver();
+				}
+			} else {
+				// Refresh existing slider
+				this.refreshSlider();
 			}
 		}
 	}
@@ -487,6 +557,12 @@ class MediaAccordion {
 		
 		window.removeEventListener('orientationchange', this.handleOrientationChange);
 		window.removeEventListener('resize', this.handleOrientationChange);
+		
+		// Disconnect intersection observer
+		if (this.intersectionObserver) {
+			this.intersectionObserver.disconnect();
+			this.intersectionObserver = null;
+		}
 		
 		// Destroy slider
 		if (this.slider) {
