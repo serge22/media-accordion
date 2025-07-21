@@ -165,29 +165,98 @@ function createNavigationPlugin(slider) {
 }
 
 /**
+ * Global accordion visibility manager
+ * Uses a single intersection observer to monitor all accordions
+ */
+const AccordionVisibilityManager = {
+	observer: null,
+	accordions: new Map(),
+
+	/**
+	 * Initialize the global observer
+	 */
+	init() {
+		if (!this.observer) {
+			this.observer = new IntersectionObserver((entries) => {
+				entries.forEach(entry => {
+					const accordion = this.accordions.get(entry.target);
+					if (accordion) {
+						if (entry.isIntersecting && Utils.isElementVisible(entry.target)) {
+							accordion.onVisibilityChange(true);
+						} else {
+							accordion.onVisibilityChange(false);
+						}
+					}
+				});
+			}, {
+				root: null,
+				rootMargin: '0px',
+				threshold: 0.1
+			});
+		}
+	},
+
+	/**
+	 * Register an accordion for visibility monitoring
+	 * @param {MediaAccordion} accordion - The accordion instance
+	 */
+	register(accordion) {
+		this.init();
+		this.accordions.set(accordion.accordion, accordion);
+		this.observer.observe(accordion.accordion);
+	},
+
+	/**
+	 * Unregister an accordion from visibility monitoring
+	 * @param {MediaAccordion} accordion - The accordion instance
+	 */
+	unregister(accordion) {
+		if (this.observer && this.accordions.has(accordion.accordion)) {
+			this.observer.unobserve(accordion.accordion);
+			this.accordions.delete(accordion.accordion);
+		}
+	},
+
+	/**
+	 * Destroy the global observer
+	 */
+	destroy() {
+		if (this.observer) {
+			this.observer.disconnect();
+			this.observer = null;
+			this.accordions.clear();
+		}
+	}
+};
+
+/**
  * MediaAccordion class handles all accordion functionality
  */
 class MediaAccordion {
+	// State properties - initialize at class level
+	currentIndex = 0;
+	timeoutId = null;
+	isPaused = false;
+	remainingTime = 0;
+	startTime = 0;
+	duration = 0;
+	slider = null;
+	intersectionObserver = null;
+	resizeTimeout = null;
+	isVisible = false;
+	wasUserPaused = false;
+
 	/**
 	 * Initialize the accordion
 	 * @param {HTMLElement} element - The accordion container element
 	 */
 	constructor(element) {
+		// DOM references - keep in constructor since they depend on the element parameter
 		this.accordion = element;
 		this.items = this.accordion.querySelectorAll(CONFIG.SELECTORS.ACCORDION_ITEM);
 		this.mediaContainer = this.accordion.querySelector(CONFIG.SELECTORS.MEDIA_CONTAINER);
 		this.pauseButton = this.accordion.querySelector(CONFIG.SELECTORS.PAUSE_BUTTON);
 		this.contentContainer = this.accordion.querySelector(CONFIG.SELECTORS.CONTENT_CONTAINER);
-		
-		this.currentIndex = 0;
-		this.timeoutId = null;
-		this.isPaused = false;
-		this.remainingTime = 0;
-		this.startTime = 0;
-		this.duration = 0;
-		this.slider = null;
-		this.intersectionObserver = null;
-		this.resizeTimeout = null;
 		
 		// Bind methods
 		this.handleClick = this.handleClick.bind(this);
@@ -207,36 +276,13 @@ class MediaAccordion {
 		this.attachEventListeners();
 		this.showItem(0);
 
-		// Check if we need slider and if accordion is visible
-		if (!Utils.isLandscapeOrSquare()) {
-			if (Utils.isElementVisible(this.accordion)) {
-				this.initSlider();
-			} else {
-				this.setupVisibilityObserver();
-			}
-		}
-	}
+		// Always register for visibility monitoring
+		AccordionVisibilityManager.register(this);
 
-	/**
-	 * Setup intersection observer to detect when accordion becomes visible
-	 */
-	setupVisibilityObserver() {
-		if (!this.intersectionObserver) {
-			this.intersectionObserver = new IntersectionObserver((entries) => {
-				entries.forEach(entry => {
-					if (entry.isIntersecting && Utils.isElementVisible(this.accordion)) {
-						this.initSlider();
-						this.intersectionObserver.disconnect();
-					}
-				});
-			}, {
-				root: null,
-				rootMargin: '0px',
-				threshold: 0.1
-			});
+		// Check if we need slider for portrait mode
+		if (!Utils.isLandscapeOrSquare() && Utils.isElementVisible(this.accordion)) {
+			this.initSlider();
 		}
-		
-		this.intersectionObserver.observe(this.accordion);
 	}
 
 	/**
@@ -249,7 +295,7 @@ class MediaAccordion {
 
 		// Double-check visibility before initialization
 		if (!Utils.isElementVisible(this.accordion)) {
-			this.setupVisibilityObserver();
+			AccordionVisibilityManager.register(this);
 			return;
 		}
 
@@ -337,6 +383,73 @@ class MediaAccordion {
 	}
 
 	/**
+	 * Handle visibility changes from intersection observer
+	 * @param {boolean} isVisible - Whether the accordion is visible
+	 */
+	onVisibilityChange(isVisible) {
+		this.isVisible = isVisible;
+
+		if (isVisible) {
+			// Initialize slider if needed and in portrait mode
+			if (!Utils.isLandscapeOrSquare() && !this.slider) {
+				this.initSlider();
+			}
+			// Resume animation if not manually paused by user
+			if (!this.wasUserPaused) {
+				this.resumeAnimation();
+			}
+		} else {
+			// Pause animation when not visible
+			this.pauseAnimation();
+		}
+	}
+
+	/**
+	 * Pause animation due to visibility (not user action)
+	 */
+	pauseAnimation() {
+		if (!this.isPaused) {
+			this.isPaused = true;
+			this.clearTimer();
+			
+			// Calculate remaining time
+			const elapsed = Date.now() - this.startTime;
+			this.remainingTime = Math.max(0, this.duration - elapsed);
+
+			// Update video playback
+			this.handleVideoPlayback();
+			
+			// Add paused class for CSS animations
+			if (this.items[this.currentIndex]) {
+				this.items[this.currentIndex].classList.add(CONFIG.SELECTORS.PAUSED_CLASS);
+			}
+		}
+	}
+
+	/**
+	 * Resume animation due to visibility (not user action)
+	 */
+	resumeAnimation() {
+		if (this.isPaused && !this.wasUserPaused) {
+			this.isPaused = false;
+			this.startTime = Date.now();
+			
+			// Schedule next item with remaining time
+			this.timeoutId = setTimeout(() => {
+				this.showItem((this.currentIndex + 1) % this.items.length);
+			}, this.remainingTime);
+
+			// Update video playback
+			this.handleVideoPlayback();
+			
+			// Remove paused class
+			if (this.items[this.currentIndex]) {
+				this.items[this.currentIndex].classList.remove(CONFIG.SELECTORS.PAUSED_CLASS);
+			}
+		}
+	}
+
+	/**
 	 * Handle orientation/resize changes
 	 */
 	handleOrientationChange() {
@@ -345,13 +458,9 @@ class MediaAccordion {
 			this.destroySlider();
 		} else {
 			// Initialize slider if not already done and accordion is visible
-			if (!this.slider) {
-				if (Utils.isElementVisible(this.accordion)) {
-					this.initSlider();
-				} else {
-					this.setupVisibilityObserver();
-				}
-			} else {
+			if (!this.slider && this.isVisible) {
+				this.initSlider();
+			} else if (this.slider) {
 				// Refresh existing slider
 				this.refreshSlider();
 			}
@@ -428,7 +537,8 @@ class MediaAccordion {
 	 * Schedule the next item to be shown
 	 */
 	scheduleNextItem() {
-		if (this.isPaused) {
+		// Don't schedule if paused or not visible
+		if (this.isPaused || !this.isVisible) {
 			return;
 		}
 
@@ -482,13 +592,14 @@ class MediaAccordion {
 	}
 
 	/**
-	 * Pause the accordion
+	 * Pause the accordion (user action)
 	 */
 	pause() {
 		if (this.isPaused) {
 			return;
 		}
 
+		this.wasUserPaused = true;
 		this.isPaused = true;
 		this.clearTimer();
 		
@@ -499,27 +610,32 @@ class MediaAccordion {
 		// Update UI
 		this.updatePauseButton();
 		this.items[this.currentIndex].classList.add(CONFIG.SELECTORS.PAUSED_CLASS);
+		this.handleVideoPlayback();
 	}
 
 	/**
-	 * Resume the accordion
+	 * Resume the accordion (user action)
 	 */
 	resume() {
 		if (!this.isPaused) {
 			return;
 		}
 
+		this.wasUserPaused = false;
 		this.isPaused = false;
 		this.startTime = Date.now();
 		
-		// Schedule next item with remaining time
-		this.timeoutId = setTimeout(() => {
-			this.showItem((this.currentIndex + 1) % this.items.length);
-		}, this.remainingTime);
+		// Only schedule next item if accordion is visible
+		if (this.isVisible) {
+			this.timeoutId = setTimeout(() => {
+				this.showItem((this.currentIndex + 1) % this.items.length);
+			}, this.remainingTime);
+		}
 
 		// Update UI
 		this.updatePauseButton();
 		this.items[this.currentIndex].classList.remove(CONFIG.SELECTORS.PAUSED_CLASS);
+		this.handleVideoPlayback();
 	}
 
 	/**
@@ -558,11 +674,8 @@ class MediaAccordion {
 		window.removeEventListener('orientationchange', this.handleOrientationChange);
 		window.removeEventListener('resize', this.handleOrientationChange);
 		
-		// Disconnect intersection observer
-		if (this.intersectionObserver) {
-			this.intersectionObserver.disconnect();
-			this.intersectionObserver = null;
-		}
+		// Unregister from global visibility manager
+		AccordionVisibilityManager.unregister(this);
 		
 		// Destroy slider
 		if (this.slider) {
@@ -591,3 +704,8 @@ function initializeAccordions() {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', initializeAccordions);
+
+// Clean up global observer when page unloads
+window.addEventListener('beforeunload', () => {
+	AccordionVisibilityManager.destroy();
+});
