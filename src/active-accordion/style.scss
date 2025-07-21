@@ -8,7 +8,7 @@
 .wp-block-srg-media-accordion {
 	display: flex;
 	flex-direction: column-reverse;
-    gap: 1.0625rem;
+	gap: 1.0625rem;
 	overflow: hidden;
 
 	&_media-container {
@@ -28,16 +28,16 @@
 	&_pause-btn-container {
 		position: absolute;
 		right: 2rem;
-        bottom: 6.25rem;
+		bottom: 6.25rem;
 	}
 
 	&_pause-btn {
-		color: #000000;
-		background-color: #FFFFFF;
+		color: #000;
+		background-color: #fff;
 		cursor: pointer;
 		padding: 1.25rem;
 		border: none;
-    	border-radius: 18.75rem;
+		border-radius: 18.75rem;
 
 		svg {
 			pointer-events: none;
@@ -57,9 +57,8 @@
 .wp-block-srg-media-accordion-item {
 	position: relative;
 	display: flex;
-    flex-direction: column;
-	
-	
+	flex-direction: column;
+
 
 	&.active#{&}--paused::after {
 		animation-play-state: paused;
@@ -70,7 +69,7 @@
 	}
 
 	&_header {
-		opacity: .4;
+		opacity: 0.4;
 
 		button {
 			width: 100%;
@@ -90,7 +89,7 @@
 		}
 	}
 
-	
+
 }
 
 .keen-slider:not([data-keen-slider-disabled]) {
@@ -98,13 +97,14 @@
 	overflow: visible !important;
 
 	.keen-slider__slide {
-		row-gap: .5rem;
+		row-gap: 0.5rem;
 		padding: 1.25rem;
-		border-radius: .9375rem;
-		background: hsla(0, 0%, 100%, .1);
+		border-radius: 0.9375rem;
+		background: hsla(0, 0%, 100%, 0.1);
 		box-sizing: border-box;
 	}
 }
+
 .keen-slider_navigation-wrapper {
 	position: relative;
 
@@ -113,17 +113,16 @@
 		flex-direction: row;
 		align-items: center;
 		justify-content: center;
-		margin: auto;
-		gap: .625rem;
-		margin: .8rem 0;
+		gap: 0.625rem;
+		margin: 0.8rem 0;
 	}
 
 	.dot {
-		width: .625rem;
-		height: .625rem;
+		width: 0.625rem;
+		height: 0.625rem;
 		border-radius: 50%;
-		background-color: currentColor;
-		opacity: .2;
+		background-color: currentcolor;
+		opacity: 0.2;
 	}
 
 	// .dot:focus {
@@ -136,14 +135,17 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
+
 	.keen-slider_navigation-wrapper {
+
 		.dot {
-			transition: opacity .5s linear;
+			transition: opacity 0.5s linear;
 		}
 	}
 }
 
 @media (min-aspect-ratio: 1 / 1) {
+
 	.wp-block-srg-media-accordion {
 		flex-direction: row;
 		gap: 0;
@@ -153,7 +155,7 @@
 			align-items: center;
 			justify-content: center;
 			flex: 1;
-			padding: 0;;
+			padding: 0;
 		}
 
 		&_content-container {
@@ -167,27 +169,27 @@
 		row-gap: 0;
 		padding: 0;
 		padding-left: 1.875rem;
-		padding-right: clamp(1.8125rem, 8.64vw + -.2121478873rem, 7.5625rem);
+		padding-right: clamp(1.8125rem, 8.64vw + -0.2121478873rem, 7.5625rem);
 		background: none;
 
 		&::before {
 			position: absolute;
 			left: 0;
-			width: .125rem;
+			width: 0.125rem;
 			height: 100%;
-			border-radius: .625rem;
-			background-color: currentColor;
+			border-radius: 0.625rem;
+			background-color: currentcolor;
 			content: "";
-			opacity: .3;
+			opacity: 0.3;
 		}
 
 		&_content {
 			display: grid;
 			grid-template-rows: 0fr;
 			overflow: hidden;
-			transition-property: grid-template-rows,padding;
+			transition-property: grid-template-rows, padding;
 			transition-timing-function: ease;
-			transition-duration: .5s;
+			transition-duration: 0.5s;
 
 			&-wrap {
 				min-height: 0;
@@ -204,13 +206,13 @@
 			&::after {
 				position: absolute;
 				left: 0;
-				width: .125rem;
+				width: 0.125rem;
 				height: 100%;
-				border-radius: .625rem;
-				background-color: currentColor;
+				border-radius: 0.625rem;
+				background-color: currentcolor;
 				content: "";
 
-				animation: media-accordion-progress var(--animation-duration,8s) linear normal forwards;
+				animation: media-accordion-progress var(--animation-duration, 8s) linear normal forwards;
 			}
 
 			.wp-block-srg-media-accordion-item_header {
@@ -225,11 +227,12 @@
 }
 
 @keyframes media-accordion-progress {
-    0% {
-        height: 0%
-    }
 
-    to {
-        height: 100%
-    }
+	0% {
+		height: 0%;
+	}
+
+	to {
+		height: 100%;
+	}
 }

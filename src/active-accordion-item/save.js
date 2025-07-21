@@ -7,18 +7,23 @@
 import { useBlockProps, InnerBlocks } from '@wordpress/block-editor';
 
 /**
- * The save function defines the way in which the different attributes should
- * be combined into the final markup, which is then serialized by the block
- * editor into `post_content`.
+ * Save function for the active accordion item block.
  *
- * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-edit-save/#save
+ * Renders the final markup for an accordion item with optional media content,
+ * a collapsible header button, and inner blocks content. The component supports
+ * both video and image media types and applies custom animation duration styling.
  *
- * @return {Element} Element to render.
+ * @param {Object} root0            - The component props
+ * @param {Object} root0.attributes - Block attributes containing configuration data
+ *
+ * @return {JSX.Element} The accordion item markup with media template, header button, and content area
+ *
+ * @see {@link https://developer.wordpress.org/block-editor/reference-guides/block-api/block-edit-save/#save}
  */
-export default function save( { attributes  } ) {
-	const blockProps = useBlockProps.save({
-        style: { '--animation-duration': `${ attributes.duration }ms` }
-    });
+export default function save( { attributes } ) {
+	const blockProps = useBlockProps.save( {
+		style: { '--animation-duration': `${ attributes.duration }ms` },
+	} );
 	const baseClass = blockProps.className;
 	return (
 		<div { ...blockProps }>
@@ -38,14 +43,17 @@ export default function save( { attributes  } ) {
 						<img
 							src={ attributes.mediaUrl }
 							style={ { maxWidth: '100%', height: 'auto' } }
+							alt=""
 						/>
 					) }
 			</template>
-			<h3 className={`${baseClass}_header`}>
-				<button className={`${baseClass}_header-button`}>{ attributes.title }</button>
+			<h3 className={ `${ baseClass }_header` }>
+				<button className={ `${ baseClass }_header-button` }>
+					{ attributes.title }
+				</button>
 			</h3>
-			<div className={`${baseClass}_content`}>
-				<div className={`${baseClass}_content-wrap`}>
+			<div className={ `${ baseClass }_content` }>
+				<div className={ `${ baseClass }_content-wrap` }>
 					<InnerBlocks.Content />
 				</div>
 			</div>

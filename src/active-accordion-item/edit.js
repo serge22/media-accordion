@@ -41,9 +41,12 @@ const TEMPLATE = [
  * The edit function describes the structure of your block in the context of the
  * editor. This represents what the editor will render when the block is used.
  *
+ * @param {Object}   props               - Block edit function props
+ * @param {Object}   props.attributes    - Block attributes object
+ * @param {Function} props.setAttributes - Function to set block attributes
  * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-edit-save/#edit
  *
- * @return {Element} Element to render.
+ * @return {JSX.Element} Element to render.
  */
 export default function Edit( { attributes, setAttributes } ) {
 	const handleDurationChange = ( value ) => {
@@ -75,21 +78,30 @@ export default function Edit( { attributes, setAttributes } ) {
 		} );
 	};
 
-	const mediaButtonContent = ! attributes.mediaUrl ? (
-		__( 'Select Image or Video', 'media-accordion-item' )
-	) : attributes.mime.startsWith( 'video/' ) ? (
-		<video
-			src={ attributes.mediaUrl }
-			controls
-			style={ { maxWidth: '100%', height: 'auto' } }
-		/>
-	) : (
-		<img
-			src={ attributes.mediaUrl }
-			alt={ __( 'Media selected', 'media-accordion-item' ) }
-			style={ { maxWidth: '100%', height: 'auto' } }
-		/>
-	);
+	let mediaButtonContent;
+
+	if ( ! attributes.mediaUrl ) {
+		mediaButtonContent = __(
+			'Select Image or Video',
+			'media-accordion-item'
+		);
+	} else if ( attributes.mime.startsWith( 'video/' ) ) {
+		mediaButtonContent = (
+			<video
+				src={ attributes.mediaUrl }
+				controls
+				style={ { maxWidth: '100%', height: 'auto' } }
+			/>
+		);
+	} else {
+		mediaButtonContent = (
+			<img
+				src={ attributes.mediaUrl }
+				alt={ __( 'Media selected', 'media-accordion-item' ) }
+				style={ { maxWidth: '100%', height: 'auto' } }
+			/>
+		);
+	}
 
 	return (
 		<>
@@ -151,10 +163,7 @@ export default function Edit( { attributes, setAttributes } ) {
 					<RichText
 						className="title"
 						value={ attributes.title }
-						placeholder={ __(
-							'heading...',
-							'media-accordion-item'
-						) }
+						placeholder={ __( 'heading…', 'media-accordion-item' ) }
 						onChange={ ( value ) =>
 							setAttributes( { title: value } )
 						}

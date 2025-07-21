@@ -22,24 +22,30 @@ const ALLOWED_BLOCKS = [ 'srg/media-accordion-item' ];
 const TEMPLATE = [ [ 'srg/media-accordion-item' ] ];
 
 /**
- * The edit function describes the structure of your block in the context of the
- * editor. This represents what the editor will render when the block is used.
+ * Edit component for the media accordion block.
  *
- * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-edit-save/#edit
+ * This component renders the block editor interface for the media accordion,
+ * including inner blocks for accordion items and a button to add new items.
+ * It automatically generates a unique ID for the accordion if one doesn't exist.
  *
- * @return {Element} Element to render.
+ * @param {Object}   props               - The component props
+ * @param {Object}   props.attributes    - Block attributes containing block data
+ * @param {Function} props.setAttributes - Function to update block attributes
+ * @param {string}   props.clientId      - Unique client ID for the block instance
+ *
+ * @return {JSX.Element} The rendered edit component
  */
 export default function Edit( { attributes, setAttributes, clientId } ) {
 	const { insertBlock } = useDispatch( 'core/block-editor' );
 
 	// Generate unique ID if it doesn't exist
-    useEffect(() => {
-        if ( ! attributes.uid) {
-            setAttributes({ 
-                uid: `accordion-${clientId.substr(0, 8)}` 
-            });
-        }
-    }, []);
+	useEffect( () => {
+		if ( ! attributes.uid ) {
+			setAttributes( {
+				uid: `accordion-${ clientId.substr( 0, 8 ) }`,
+			} );
+		}
+	}, [ attributes.uid, clientId, setAttributes ] );
 
 	return (
 		<div { ...useBlockProps() }>
