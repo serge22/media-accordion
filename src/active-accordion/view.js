@@ -267,7 +267,7 @@ class MediaAccordion {
 	// State properties - initialize at class level
 	currentIndex = 0;
 	timeoutId = null;
-	isPaused = false;
+	isPaused = true; // Start paused until visible
 	remainingTime = 0;
 	startTime = 0;
 	duration = 0;
@@ -276,6 +276,7 @@ class MediaAccordion {
 	resizeTimeout = null;
 	isVisible = false;
 	wasUserPaused = false;
+	hasStartedAnimation = false; // Track if animation has ever started
 
 	/**
 	 * Initialize the accordion
@@ -316,9 +317,12 @@ class MediaAccordion {
 		}
 
 		this.attachEventListeners();
-		this.showItem( 0 );
 
-		// Always register for visibility monitoring
+		// Set initial item but don't start animation yet
+		this.updateActiveItem( 0, false );
+		this.updateMediaContent();
+
+		// Always register for visibility monitoring first
 		AccordionVisibilityManager.register( this );
 
 		// Check if we need slider for portrait mode
@@ -449,7 +453,7 @@ class MediaAccordion {
 			if ( ! Utils.isLandscapeOrSquare() && ! this.slider ) {
 				this.initSlider();
 			}
-			// Resume animation if not manually paused by user
+			// Start/resume animation if not manually paused by user
 			if ( ! this.wasUserPaused ) {
 				this.resumeAnimation();
 			}
@@ -489,12 +493,20 @@ class MediaAccordion {
 	resumeAnimation() {
 		if ( this.isPaused && ! this.wasUserPaused ) {
 			this.isPaused = false;
-			this.startTime = Date.now();
 
-			// Schedule next item with remaining time
-			this.timeoutId = setTimeout( () => {
-				this.showItem( ( this.currentIndex + 1 ) % this.items.length );
-			}, this.remainingTime );
+			// If animation hasn't started yet, start fresh
+			if ( ! this.hasStartedAnimation ) {
+				this.hasStartedAnimation = true;
+				this.scheduleNextItem();
+			} else {
+				// Resume with remaining time
+				this.startTime = Date.now();
+				this.timeoutId = setTimeout( () => {
+					this.showItem(
+						( this.currentIndex + 1 ) % this.items.length
+					);
+				}, this.remainingTime );
+			}
 
 			// Update video playback
 			this.handleVideoPlayback();
@@ -505,6 +517,13 @@ class MediaAccordion {
 					CONFIG.SELECTORS.PAUSED_CLASS
 				);
 			}
+		} else if (
+			! this.isPaused &&
+			! this.wasUserPaused &&
+			this.remainingTime === 0
+		) {
+			// Start animation for the first time when becoming visible
+			this.scheduleNextItem();
 		}
 	}
 
@@ -682,9 +701,11 @@ class MediaAccordion {
 		this.isPaused = true;
 		this.clearTimer();
 
-		// Calculate remaining time
-		const elapsed = Date.now() - this.startTime;
-		this.remainingTime = Math.max( 0, this.duration - elapsed );
+		// Calculate remaining time only if animation has started
+		if ( this.hasStartedAnimation ) {
+			const elapsed = Date.now() - this.startTime;
+			this.remainingTime = Math.max( 0, this.duration - elapsed );
+		}
 
 		// Update UI
 		this.updatePauseButton();
@@ -704,13 +725,20 @@ class MediaAccordion {
 
 		this.wasUserPaused = false;
 		this.isPaused = false;
-		this.startTime = Date.now();
 
 		// Only schedule next item if accordion is visible
 		if ( this.isVisible ) {
-			this.timeoutId = setTimeout( () => {
-				this.showItem( ( this.currentIndex + 1 ) % this.items.length );
-			}, this.remainingTime );
+			if ( ! this.hasStartedAnimation ) {
+				this.hasStartedAnimation = true;
+				this.scheduleNextItem();
+			} else {
+				this.startTime = Date.now();
+				this.timeoutId = setTimeout( () => {
+					this.showItem(
+						( this.currentIndex + 1 ) % this.items.length
+					);
+				}, this.remainingTime );
+			}
 		}
 
 		// Update UI
