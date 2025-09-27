@@ -32,7 +32,7 @@ export default function save( { attributes } ) {
 					attributes.mime.startsWith( 'video/' ) && (
 						<video
 							src={ attributes.mediaUrl }
-							className={ `${ baseClass }_media-item` }
+							className={ `${ baseClass }_media-item skip-lazy` }
 							muted
 							playsInline
 							loop
