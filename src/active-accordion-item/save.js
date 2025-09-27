@@ -32,6 +32,7 @@ export default function save( { attributes } ) {
 					attributes.mime.startsWith( 'video/' ) && (
 						<video
 							src={ attributes.mediaUrl }
+							className={ `${ baseClass }_media-item` }
 							muted
 							playsInline
 							loop
@@ -42,7 +43,7 @@ export default function save( { attributes } ) {
 					attributes.mime.startsWith( 'image/' ) && (
 						<img
 							src={ attributes.mediaUrl }
-							class="skip-lazy"
+							className={ `${ baseClass }_media-item skip-lazy` }
 							style={ { maxWidth: '100%', height: 'auto' } }
 							alt=""
 						/>

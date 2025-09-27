@@ -226,6 +226,15 @@
 	}
 }
 
+.wp-block-srg-media-accordion-item_media-item {
+	opacity: 0;
+	transition: opacity 0.5s ease-in-out;
+
+	&.active {
+		opacity: 1;
+	}
+}
+
 @keyframes media-accordion-progress {
 
 	0% {
