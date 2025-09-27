@@ -42,6 +42,7 @@ export default function save( { attributes } ) {
 					attributes.mime.startsWith( 'image/' ) && (
 						<img
 							src={ attributes.mediaUrl }
+							class="skip-lazy"
 							style={ { maxWidth: '100%', height: 'auto' } }
 							alt=""
 						/>
