@@ -8,7 +8,7 @@ export const CONFIG = {
 	SELECTORS: {
 		ACCORDION: '.wp-block-srg-media-accordion',
 		ACCORDION_ITEM: '.wp-block-srg-media-accordion-item',
-		ITEM_BUTTON: '.wp-block-srg-media-accordion-item_header-button',
+		ITEM_BUTTON: '.wp-block-srg-media-accordion-item',
 		MEDIA_CONTAINER: '.wp-block-srg-media-accordion_media-wrap',
 		MEDIA_TEMPLATE: '.media-template',
 		PAUSE_BUTTON: '.wp-block-srg-media-accordion_pause-btn',

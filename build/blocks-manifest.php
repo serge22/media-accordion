@@ -1,17 +1,29 @@
 <?php
 // This file is generated. Do not modify it manually.
 return array(
-	'active-accordion' => array(
+	'media-accordion' => array(
 		'$schema' => 'https://schemas.wp.org/trunk/block.json',
 		'apiVersion' => 3,
 		'name' => 'srg/media-accordion',
-		'version' => '0.1.0',
+		'version' => '2.0.0',
 		'title' => 'Media Accordion',
 		'category' => 'widgets',
 		'icon' => 'list-view',
 		'description' => 'An interactive block for displaying images and videos in a flexible, accordion-style layout.',
 		'attributes' => array(
 			'uid' => array(
+				'type' => 'string',
+				'default' => ''
+			),
+			'autoplay' => array(
+				'type' => 'boolean',
+				'default' => true
+			),
+			'layout' => array(
+				'type' => 'string',
+				'default' => 'layout-1'
+			),
+			'activeItemBgColor' => array(
 				'type' => 'string',
 				'default' => ''
 			)
@@ -29,11 +41,11 @@ return array(
 		'viewScript' => 'file:./view.js',
 		'viewStyle' => 'file:./view.css'
 	),
-	'active-accordion-item' => array(
+	'media-accordion-item' => array(
 		'$schema' => 'https://schemas.wp.org/trunk/block.json',
 		'apiVersion' => 3,
 		'name' => 'srg/media-accordion-item',
-		'version' => '0.1.0',
+		'version' => '2.0.0',
 		'title' => 'Media Accordion Item',
 		'parent' => array(
 			'srg/media-accordion'

@@ -23,7 +23,7 @@ export class MediaAccordion {
 	// State properties - initialize at class level
 	currentIndex = 0;
 	timeoutId = null;
-	isPaused = true; // Start paused until visible
+	isPaused = true; // Will be updated based on autoplay setting
 	remainingTime = 0;
 	startTime = 0;
 	duration = 0;
@@ -61,6 +61,19 @@ export class MediaAccordion {
 			CONFIG.DEFAULTS.RESIZE_DEBOUNCE
 		);
 
+		// Read autoplay setting from dataset (default: true)
+		const ds = this.accordion?.dataset || {};
+		this.autoplayEnabled = ds.autoplay !== 'false';
+
+		// If autoplay is disabled, start paused and treat as user-paused to prevent auto-resume on visibility
+		if ( this.autoplayEnabled ) {
+			this.isPaused = true; // will auto-resume on visibility
+			this.wasUserPaused = false;
+		} else {
+			this.isPaused = true;
+			this.wasUserPaused = true;
+		}
+
 		this.init();
 	}
 
@@ -77,6 +90,7 @@ export class MediaAccordion {
 		// Set initial item but don't start animation yet
 		this.updateActiveItem( 0, false );
 		this.updateMediaContent();
+		this.updatePauseButton();
 
 		// Always register for visibility monitoring first
 		AccordionVisibilityManager.register( this );
@@ -156,6 +170,11 @@ export class MediaAccordion {
 	 */
 	attachEventListeners() {
 		this.accordion.addEventListener( 'click', this.handleClick );
+
+		if (this.accordion.classList.contains('is-layout-2')) {
+			this.items.forEach(item => item.addEventListener( 'mouseenter', this.handleMouseEnterItem.bind(this) ));
+		}
+
 		window.addEventListener(
 			'orientationchange',
 			this.handleOrientationChange
@@ -181,6 +200,14 @@ export class MediaAccordion {
 		const pauseButton = e.target.closest( CONFIG.SELECTORS.PAUSE_BUTTON );
 		if ( pauseButton ) {
 			this.togglePause();
+		}
+	}
+
+	handleMouseEnterItem( e ) {
+		const itemButton = e.target.closest( CONFIG.SELECTORS.ITEM_BUTTON );
+		if ( itemButton ) {
+			this.handleItemClick( itemButton );
+			return;
 		}
 	}
 
@@ -373,7 +400,7 @@ export class MediaAccordion {
 		// Handle video autoplay based on pause state
 		const video = mediaElement.querySelector( 'video' );
 		if ( video ) {
-			video.autoplay = ! this.isPaused;
+			video.autoplay = ! this.isPaused || ! this.autoplayEnabled;
 		}
 
 		this.mediaContainer.innerHTML = '';
@@ -555,6 +582,8 @@ export class MediaAccordion {
 		if ( this.accordion ) {
 			this.accordion.removeEventListener( 'click', this.handleClick );
 		}
+
+		this.items.forEach(item => item.removeEventListener( 'mouseenter', this.handleMouseEnterItem.bind(this) ));
 
 		window.removeEventListener(
 			'orientationchange',

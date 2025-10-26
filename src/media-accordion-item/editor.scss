@@ -29,3 +29,15 @@
 		padding: 0.5em;
 	}
 }
+
+@media (min-aspect-ratio: 1 / 1) {
+	.wp-block-srg-media-accordion-item {
+		&.active {
+			&::after {
+				content: none;
+				animation: none;
+				width: 0;
+			}
+		}
+	}
+}

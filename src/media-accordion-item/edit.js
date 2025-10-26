@@ -21,6 +21,7 @@ import {
 } from '@wordpress/block-editor';
 
 import { PanelBody, TextControl, Button } from '@wordpress/components';
+import { useSelect } from '@wordpress/data';
 
 /**
  * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
@@ -169,7 +170,11 @@ export default function Edit( { attributes, setAttributes } ) {
 						}
 					/>
 				</div>
-				<InnerBlocks template={ TEMPLATE } />
+				<div className="wp-block-srg-media-accordion-item_content">
+					<div className="wp-block-srg-media-accordion-item_content-wrap">
+						<InnerBlocks template={ TEMPLATE } />
+					</div>
+				</div>
 			</div>
 		</>
 	);

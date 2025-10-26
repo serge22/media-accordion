@@ -49,11 +49,11 @@ export default function save( { attributes } ) {
 						/>
 					) }
 			</template>
-			<h3 className={ `${ baseClass }_header` }>
+			<div className={ `${ baseClass }_header` }>
 				<button className={ `${ baseClass }_header-button` }>
 					{ attributes.title }
 				</button>
-			</h3>
+			</div>
 			<div className={ `${ baseClass }_content` }>
 				<div className={ `${ baseClass }_content-wrap` }>
 					<InnerBlocks.Content />

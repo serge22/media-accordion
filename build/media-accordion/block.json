@@ -2,13 +2,25 @@
   "$schema": "https://schemas.wp.org/trunk/block.json",
   "apiVersion": 3,
   "name": "srg/media-accordion",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "title": "Media Accordion",
   "category": "widgets",
   "icon": "list-view",
   "description": "An interactive block for displaying images and videos in a flexible, accordion-style layout.",
   "attributes": {
     "uid": {
+      "type": "string",
+      "default": ""
+    },
+    "autoplay": {
+      "type": "boolean",
+      "default": true
+    },
+    "layout": {
+      "type": "string",
+      "default": "layout-1"
+    },
+    "activeItemBgColor": {
       "type": "string",
       "default": ""
     }

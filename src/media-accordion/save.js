@@ -17,7 +17,11 @@ import { useBlockProps, InnerBlocks } from '@wordpress/block-editor';
  */
 export default function save( { attributes } ) {
 	const blockProps = useBlockProps.save( {
-		className: attributes.uid,
+		className: `${ attributes.uid } is-${ attributes.layout || 'layout-1' }`,
+		'data-autoplay': attributes.autoplay ? 'true' : 'false',
+		style: attributes.activeItemBgColor
+			? { '--active-item-bg-color': attributes.activeItemBgColor }
+			: {},
 	} );
 	const baseClass = blockProps.className.split( ' ' )[ 0 ];
 	return (
