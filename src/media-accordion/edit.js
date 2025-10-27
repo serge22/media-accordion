@@ -10,10 +10,15 @@ import {
 	InspectorControls,
 	PanelColorSettings,
 } from '@wordpress/block-editor';
-import { Button, PanelBody, ToggleControl, RadioControl } from '@wordpress/components';
+import {
+	Button,
+	PanelBody,
+	ToggleControl,
+	RadioControl,
+} from '@wordpress/components';
 import { createBlock } from '@wordpress/blocks';
 import { useDispatch, useSelect } from '@wordpress/data';
-import { useEffect } from '@wordpress/element';
+import { useEffect, useRef } from '@wordpress/element';
 
 /**
  * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
@@ -42,26 +47,31 @@ const TEMPLATE = [ [ 'srg/media-accordion-item' ] ];
  * @return {JSX.Element} The rendered edit component
  */
 export default function Edit( { attributes, setAttributes, clientId } ) {
-	const { insertBlock, updateBlockAttributes } = useDispatch( 'core/block-editor' );
+	const { insertBlock } = useDispatch( 'core/block-editor' );
+	const lastActiveBlockRef = useRef( null );
 
 	// Get inner blocks and selected block
-    const { innerBlocks, selectedBlockClientId } = useSelect(
-        ( select ) => {
+	const { innerBlocks, selectedBlockClientId } = useSelect(
+		( select ) => {
 			const blockEditor = select( 'core/block-editor' );
 			const blocks = blockEditor.getBlocks( clientId );
 			const selectedBlock = blockEditor.getSelectedBlock();
-			
+
 			// Check if selected block is one of our inner blocks or a descendant
 			let selectedInnerBlockId = null;
 			if ( selectedBlock ) {
 				// Check if the selected block is directly an inner block
-				const isDirectInnerBlock = blocks.some( block => block.clientId === selectedBlock.clientId );
+				const isDirectInnerBlock = blocks.some(
+					( block ) => block.clientId === selectedBlock.clientId
+				);
 				if ( isDirectInnerBlock ) {
 					selectedInnerBlockId = selectedBlock.clientId;
 				} else {
 					// Check if the selected block is a descendant of any inner block
-					blocks.forEach( block => {
-						const parents = blockEditor.getBlockParents( selectedBlock.clientId );
+					blocks.forEach( ( block ) => {
+						const parents = blockEditor.getBlockParents(
+							selectedBlock.clientId
+						);
 						if ( parents.includes( block.clientId ) ) {
 							selectedInnerBlockId = block.clientId;
 						}
@@ -69,41 +79,50 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 				}
 			}
 
-            return {
+			return {
 				innerBlocks: blocks,
 				selectedBlockClientId: selectedInnerBlockId,
 			};
-        },
-        [ clientId ]
-    );
+		},
+		[ clientId ]
+	);
 
-	// Set 'active' class to selected inner block and remove from others
+	// Apply 'active' class to DOM elements directly (editor only, not saved)
 	useEffect( () => {
-		if ( innerBlocks.length > 0 ) {
-			innerBlocks.forEach( ( block, index ) => {
-				const shouldBeActive = selectedBlockClientId 
-					? block.clientId === selectedBlockClientId 
-					: index === 0; // Default to first block if none selected
-				
-				const currentClassName = block.attributes.className || '';
-				const hasActive = currentClassName.includes( 'active' );
-				
-				if ( shouldBeActive && ! hasActive ) {
-					// Add active class
-					const newClassName = currentClassName ? `${ currentClassName } active`.trim() : 'active';
-					updateBlockAttributes( block.clientId, {
-						className: newClassName
-					} );
-				} else if ( ! shouldBeActive && hasActive ) {
-					// Remove active class
-					const newClassName = currentClassName.replace( /\s*active\s*/g, ' ' ).trim();
-					updateBlockAttributes( block.clientId, {
-						className: newClassName || undefined
-					} );
-				}
-			} );
+		if ( innerBlocks.length === 0 ) {
+			return;
 		}
-	}, [ innerBlocks, selectedBlockClientId, updateBlockAttributes ] );
+
+		// Determine which block should be active
+		let activeBlockId;
+		if ( selectedBlockClientId ) {
+			// An inner block is selected, make it active
+			activeBlockId = selectedBlockClientId;
+			lastActiveBlockRef.current = selectedBlockClientId;
+		} else if ( lastActiveBlockRef.current ) {
+			// No selection, keep the last active block
+			activeBlockId = lastActiveBlockRef.current;
+		} else {
+			// Default to first block
+			activeBlockId = innerBlocks[ 0 ].clientId;
+			lastActiveBlockRef.current = activeBlockId;
+		}
+
+		// Apply/remove active class to DOM elements
+		innerBlocks.forEach( ( block ) => {
+			const blockElement = document.querySelector(
+				`[data-block="${ block.clientId }"]`
+			);
+
+			if ( blockElement ) {
+				if ( block.clientId === activeBlockId ) {
+					blockElement.classList.add( 'active' );
+				} else {
+					blockElement.classList.remove( 'active' );
+				}
+			}
+		} );
+	}, [ innerBlocks, selectedBlockClientId ] );
 
 	// Generate unique ID if it doesn't exist
 	useEffect( () => {
@@ -117,25 +136,40 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody title={ __( 'Accordion Settings', 'media-accordion' ) }>
+				<PanelBody
+					title={ __( 'Accordion Settings', 'media-accordion' ) }
+				>
 					<ToggleControl
 						label={ __( 'Autoplay', 'media-accordion' ) }
 						help={
 							attributes.autoplay
-								? __( 'Slides advance automatically', 'media-accordion' )
+								? __(
+										'Slides advance automatically',
+										'media-accordion'
+								  )
 								: __( 'Manual play only', 'media-accordion' )
 						}
 						checked={ !! attributes.autoplay }
-						onChange={ ( value ) => setAttributes( { autoplay: !! value } ) }
+						onChange={ ( value ) =>
+							setAttributes( { autoplay: !! value } )
+						}
 					/>
 
 					<RadioControl
 						label={ __( 'Layout', 'media-accordion' ) }
 						selected={ attributes.layout || 'layout-1' }
-						onChange={ ( value ) => setAttributes( { layout: value } ) }
+						onChange={ ( value ) =>
+							setAttributes( { layout: value } )
+						}
 						options={ [
-							{ label: __( 'Accordion', 'media-accordion' ), value: 'layout-1' },
-							{ label: __( 'List', 'media-accordion' ), value: 'layout-2' },
+							{
+								label: __( 'Accordion', 'media-accordion' ),
+								value: 'layout-1',
+							},
+							{
+								label: __( 'List', 'media-accordion' ),
+								value: 'layout-2',
+							},
 						] }
 					/>
 				</PanelBody>
@@ -145,21 +179,25 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 					colorSettings={ [
 						{
 							value: attributes.activeItemBgColor,
-							onChange: ( value ) => setAttributes( { activeItemBgColor: value } ),
-							label: __( 'Active Item Background Color', 'media-accordion' ),
+							onChange: ( value ) =>
+								setAttributes( { activeItemBgColor: value } ),
+							label: __(
+								'Active Item Background Color',
+								'media-accordion'
+							),
 						},
 					] }
 				/>
 			</InspectorControls>
 
 			<div
-                { ...useBlockProps( {
-                    className: `is-${ attributes.layout || 'layout-1' }`,
-                    style: {
-                        '--active-item-bg-color': attributes.activeItemBgColor,
-                    },
-                } ) }
-            >
+				{ ...useBlockProps( {
+					className: `is-${ attributes.layout || 'layout-1' }`,
+					style: {
+						'--active-item-bg-color': attributes.activeItemBgColor,
+					},
+				} ) }
+			>
 				<div style={ { display: 'flex', gap: '20px' } }>
 					<div style={ { flex: '1' } }>
 						<InnerBlocks
@@ -181,9 +219,15 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 							{ __( 'Add Item', 'media-accordion' ) }
 						</Button>
 					</div>
-					<div style={{ flex: 1, minWidth: '300px', maxWidth: '500px' }}>
-						{/* Show media preview from first media-accordion-item */}
-						<MediaAccordionPreview clientId={clientId} />
+					<div
+						style={ {
+							flex: 1,
+							minWidth: '300px',
+							maxWidth: '500px',
+						} }
+					>
+						{ /* Show media preview from first media-accordion-item */ }
+						<MediaAccordionPreview clientId={ clientId } />
 					</div>
 				</div>
 			</div>

@@ -1,6 +1,6 @@
 {
 	"name": "media-accordion",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"description": "An interactive WordPress block for displaying images and videos in a flexible, accordion-style layout.",
 	"author": "Serge",
 	"license": "GPL-2.0-or-later",

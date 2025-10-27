@@ -171,8 +171,13 @@ export class MediaAccordion {
 	attachEventListeners() {
 		this.accordion.addEventListener( 'click', this.handleClick );
 
-		if (this.accordion.classList.contains('is-layout-2')) {
-			this.items.forEach(item => item.addEventListener( 'mouseenter', this.handleMouseEnterItem.bind(this) ));
+		if ( this.accordion.classList.contains( 'is-layout-2' ) ) {
+			this.items.forEach( ( item ) =>
+				item.addEventListener(
+					'mouseenter',
+					this.handleMouseEnterItem.bind( this )
+				)
+			);
 		}
 
 		window.addEventListener(
@@ -207,7 +212,6 @@ export class MediaAccordion {
 		const itemButton = e.target.closest( CONFIG.SELECTORS.ITEM_BUTTON );
 		if ( itemButton ) {
 			this.handleItemClick( itemButton );
-			return;
 		}
 	}
 
@@ -583,7 +587,12 @@ export class MediaAccordion {
 			this.accordion.removeEventListener( 'click', this.handleClick );
 		}
 
-		this.items.forEach(item => item.removeEventListener( 'mouseenter', this.handleMouseEnterItem.bind(this) ));
+		this.items.forEach( ( item ) =>
+			item.removeEventListener(
+				'mouseenter',
+				this.handleMouseEnterItem.bind( this )
+			)
+		);
 
 		window.removeEventListener(
 			'orientationchange',

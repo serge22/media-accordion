@@ -2,7 +2,7 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
 	"name": "srg/media-accordion-item",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"title": "Media Accordion Item",
 	"parent": [ "srg/media-accordion" ],
 	"category": "widgets",
