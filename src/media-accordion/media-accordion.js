@@ -410,14 +410,16 @@ export class MediaAccordion {
 		this.mediaContainer.innerHTML = '';
 		this.mediaContainer.appendChild( mediaElement );
 
-		// Force reflow before fading - target the actual elements in the container
+		// Force reflow before fading - use double rAF to ensure browser has painted initial state
 		requestAnimationFrame( () => {
-			const elements = this.mediaContainer.children;
-			for ( let i = 0; i < elements.length; i++ ) {
-				if ( elements[ i ] && elements[ i ].classList ) {
-					elements[ i ].classList.add( 'active' );
+			requestAnimationFrame( () => {
+				const elements = this.mediaContainer.children;
+				for ( let i = 0; i < elements.length; i++ ) {
+					if ( elements[ i ] && elements[ i ].classList ) {
+						elements[ i ].classList.add( 'active' );
+					}
 				}
-			}
+			} );
 		} );
 	}
 

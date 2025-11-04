@@ -5,7 +5,7 @@ return array(
 		'$schema' => 'https://schemas.wp.org/trunk/block.json',
 		'apiVersion' => 3,
 		'name' => 'srg/media-accordion',
-		'version' => '2.0.1',
+		'version' => '2.0.2',
 		'title' => 'Media Accordion',
 		'category' => 'widgets',
 		'icon' => 'list-view',
