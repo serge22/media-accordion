@@ -39,11 +39,18 @@ export default function save( { attributes } ) {
 				<div className={ `${ baseClass }_media-wrap` }>
 					{ attributes.defaultMediaUrl &&
 						attributes.defaultMediaType === 'video' && (
-							<video src={ attributes.defaultMediaUrl } />
+							<video
+								src={ attributes.defaultMediaUrl }
+								className="skip-lazy"
+							/>
 						) }
 					{ attributes.defaultMediaUrl &&
 						attributes.defaultMediaType === 'image' && (
-							<img src={ attributes.defaultMediaUrl } alt="" />
+							<img
+								src={ attributes.defaultMediaUrl }
+								alt=""
+								className="skip-lazy"
+							/>
 						) }
 				</div>
 
