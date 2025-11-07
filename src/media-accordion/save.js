@@ -21,6 +21,7 @@ export default function save( { attributes } ) {
 			attributes.layout || 'layout-1'
 		}`,
 		'data-autoplay': attributes.autoplay ? 'true' : 'false',
+		'data-has-default-media': attributes.defaultMediaId ? 'true' : 'false',
 		style: attributes.activeItemBgColor
 			? { '--active-item-bg-color': attributes.activeItemBgColor }
 			: {},
@@ -35,7 +36,16 @@ export default function save( { attributes } ) {
 			</div>
 
 			<div className={ `${ baseClass }_media-container` }>
-				<div className={ `${ baseClass }_media-wrap` }></div>
+				<div className={ `${ baseClass }_media-wrap` }>
+					{ attributes.defaultMediaUrl &&
+						attributes.defaultMediaType === 'video' && (
+							<video src={ attributes.defaultMediaUrl } />
+						) }
+					{ attributes.defaultMediaUrl &&
+						attributes.defaultMediaType === 'image' && (
+							<img src={ attributes.defaultMediaUrl } alt="" />
+						) }
+				</div>
 
 				<div className={ `${ baseClass }_pause-btn-container` }>
 					<button

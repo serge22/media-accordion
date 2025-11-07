@@ -9,16 +9,21 @@ import {
 	InnerBlocks,
 	InspectorControls,
 	PanelColorSettings,
+	MediaUpload,
+	MediaUploadCheck,
+	store as blockEditorStore,
 } from '@wordpress/block-editor';
 import {
 	Button,
 	PanelBody,
 	ToggleControl,
 	RadioControl,
+	SelectControl,
 } from '@wordpress/components';
 import { createBlock } from '@wordpress/blocks';
 import { useDispatch, useSelect } from '@wordpress/data';
-import { useEffect, useRef } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
+import apiFetch from '@wordpress/api-fetch';
 
 /**
  * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
@@ -49,13 +54,15 @@ const TEMPLATE = [ [ 'srg/media-accordion-item' ] ];
 export default function Edit( { attributes, setAttributes, clientId } ) {
 	const { insertBlock } = useDispatch( 'core/block-editor' );
 	const lastActiveBlockRef = useRef( null );
+	const [ currentMedia, setCurrentMedia ] = useState( null );
 
 	// Get inner blocks and selected block
-	const { innerBlocks, selectedBlockClientId } = useSelect(
+	const { innerBlocks, selectedBlockClientId, imageSizes } = useSelect(
 		( select ) => {
 			const blockEditor = select( 'core/block-editor' );
 			const blocks = blockEditor.getBlocks( clientId );
 			const selectedBlock = blockEditor.getSelectedBlock();
+			const settings = select( blockEditorStore ).getSettings();
 
 			// Check if selected block is one of our inner blocks or a descendant
 			let selectedInnerBlockId = null;
@@ -82,6 +89,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 			return {
 				innerBlocks: blocks,
 				selectedBlockClientId: selectedInnerBlockId,
+				imageSizes: settings?.imageSizes || [],
 			};
 		},
 		[ clientId ]
@@ -133,6 +141,55 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 		}
 	}, [ attributes.uid, clientId, setAttributes ] );
 
+	// Fetch media details when defaultMediaId changes
+	useEffect( () => {
+		if (
+			attributes.defaultMediaId &&
+			attributes.defaultMediaType === 'image'
+		) {
+			apiFetch( {
+				path: `/wp/v2/media/${ attributes.defaultMediaId }`,
+			} )
+				.then( ( media ) => {
+					setCurrentMedia( media );
+				} )
+				.catch( ( error ) => {
+					// eslint-disable-next-line no-console
+					console.error( 'Error fetching media details:', error );
+				} );
+		} else {
+			setCurrentMedia( null );
+		}
+	}, [ attributes.defaultMediaId, attributes.defaultMediaType ] );
+
+	// Get available image size options for the current image
+	const getAvailableImageSizes = () => {
+		if ( ! currentMedia || ! currentMedia.media_details?.sizes ) {
+			return [];
+		}
+
+		const availableSizes = currentMedia.media_details.sizes;
+
+		// Filter imageSizes to only include those available in the current media
+		const filteredSizes = imageSizes
+			.filter(
+				( size ) => availableSizes[ size.slug ] || size.slug === 'full'
+			)
+			.map( ( size ) => ( {
+				label: size.name,
+				value: size.slug,
+			} ) );
+
+		// Fallback: if no sizes match, ensure at least "Full" is available
+		if ( filteredSizes.length === 0 ) {
+			return [
+				{ label: __( 'Full Size', 'media-accordion' ), value: 'full' },
+			];
+		}
+
+		return filteredSizes;
+	};
+
 	return (
 		<>
 			<InspectorControls>
@@ -172,6 +229,191 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 							},
 						] }
 					/>
+				</PanelBody>
+
+				<PanelBody
+					title={ __( 'Default Media', 'media-accordion' ) }
+					initialOpen={ false }
+				>
+					<p
+						style={ {
+							marginTop: 0,
+							fontSize: '12px',
+							color: '#757575',
+						} }
+					>
+						{ __(
+							'Set a default media to display when no accordion item is active. When autoplay is disabled and default media is set, the first item will not be active by default.',
+							'media-accordion'
+						) }
+					</p>
+
+					<div style={ { display: 'flex', gap: '10px' } }>
+						<MediaUploadCheck>
+							<MediaUpload
+								onSelect={ ( media ) => {
+									const isImage = media.type === 'image';
+									let sizeSlug;
+
+									if ( isImage ) {
+										sizeSlug = media.sizes?.large
+											? 'large'
+											: 'full';
+									}
+
+									// Get the correct URL based on the size
+									let mediaUrl = media.url;
+									if (
+										isImage &&
+										sizeSlug !== 'full' &&
+										media.sizes?.[ sizeSlug ]
+									) {
+										mediaUrl = media.sizes[ sizeSlug ].url;
+									}
+
+									setAttributes( {
+										defaultMediaId: media.id,
+										defaultMediaUrl: mediaUrl,
+										defaultMediaType: media.type,
+										defaultMediaSizeSlug: sizeSlug,
+									} );
+
+									// Store the full media object for size filtering
+									if ( isImage ) {
+										setCurrentMedia( media );
+									}
+								} }
+								allowedTypes={ [ 'image', 'video' ] }
+								value={ attributes.defaultMediaId }
+								render={ ( { open } ) => (
+									<Button
+										variant="secondary"
+										onClick={ open }
+										style={ { marginTop: '10px' } }
+									>
+										{ attributes.defaultMediaId
+											? __(
+													'Replace Media',
+													'media-accordion'
+											  )
+											: __(
+													'Select Media',
+													'media-accordion'
+											  ) }
+									</Button>
+								) }
+							/>
+						</MediaUploadCheck>
+
+						{ attributes.defaultMediaId && (
+							<Button
+								variant="secondary"
+								isDestructive
+								onClick={ () => {
+									setAttributes( {
+										defaultMediaId: undefined,
+										defaultMediaUrl: undefined,
+										defaultMediaType: undefined,
+										defaultMediaSizeSlug: undefined,
+									} );
+									setCurrentMedia( null );
+								} }
+								style={ { marginTop: '10px' } }
+							>
+								{ __( 'Remove Media', 'media-accordion' ) }
+							</Button>
+						) }
+					</div>
+
+					{ attributes.defaultMediaId &&
+						attributes.defaultMediaUrl && (
+							<div
+								style={ {
+									marginTop: '15px',
+									marginBottom: '15px',
+								} }
+							>
+								<p
+									style={ {
+										margin: '0 0 8px 0',
+										fontWeight: '500',
+									} }
+								>
+									{ __( 'Preview:', 'media-accordion' ) }
+								</p>
+								<div
+									style={ {
+										position: 'relative',
+										maxWidth: '100%',
+									} }
+								>
+									{ attributes.defaultMediaType ===
+									'video' ? (
+										<video
+											src={ attributes.defaultMediaUrl }
+											style={ {
+												maxWidth: '100%',
+												height: 'auto',
+												display: 'block',
+											} }
+											controls
+										/>
+									) : (
+										<img
+											src={ attributes.defaultMediaUrl }
+											alt={ __(
+												'Default media',
+												'media-accordion'
+											) }
+											style={ {
+												maxWidth: '100%',
+												height: 'auto',
+												display: 'block',
+											} }
+										/>
+									) }
+								</div>
+							</div>
+						) }
+
+					{ attributes.defaultMediaId &&
+						attributes.defaultMediaType === 'image' && (
+							<SelectControl
+								label={ __(
+									'Image Resolution',
+									'media-accordion'
+								) }
+								value={
+									attributes.defaultMediaSizeSlug || 'large'
+								}
+								options={ getAvailableImageSizes() }
+								onChange={ async ( value ) => {
+									setAttributes( {
+										defaultMediaSizeSlug: value,
+									} );
+
+									// Get the URL for the selected size
+									if ( currentMedia ) {
+										let newUrl = currentMedia.source_url; // Default to full size
+
+										if (
+											value !== 'full' &&
+											currentMedia.media_details?.sizes?.[
+												value
+											]
+										) {
+											newUrl =
+												currentMedia.media_details
+													.sizes[ value ].source_url;
+										}
+
+										setAttributes( {
+											defaultMediaUrl: newUrl,
+										} );
+									}
+								} }
+							/>
+						) }
 				</PanelBody>
 
 				<PanelColorSettings

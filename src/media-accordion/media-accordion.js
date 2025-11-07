@@ -21,7 +21,7 @@ import { AccordionVisibilityManager } from './visibility-manager';
 
 export class MediaAccordion {
 	// State properties - initialize at class level
-	currentIndex = 0;
+	currentIndex = null;
 	timeoutId = null;
 	isPaused = true; // Will be updated based on autoplay setting
 	remainingTime = 0;
@@ -64,6 +64,7 @@ export class MediaAccordion {
 		// Read autoplay setting from dataset (default: true)
 		const ds = this.accordion?.dataset || {};
 		this.autoplayEnabled = ds.autoplay !== 'false';
+		this.hasDefaultMedia = ds.hasDefaultMedia === 'true';
 
 		// If autoplay is disabled, start paused and treat as user-paused to prevent auto-resume on visibility
 		if ( this.autoplayEnabled ) {
@@ -87,9 +88,13 @@ export class MediaAccordion {
 
 		this.attachEventListeners();
 
-		// Set initial item but don't start animation yet
-		this.updateActiveItem( 0, false );
-		this.updateMediaContent();
+		// Only set initial item if autoplay is enabled OR no default media is set
+		// When autoplay is false and default media exists, skip setting active item
+		if ( this.autoplayEnabled || ! this.hasDefaultMedia ) {
+			this.updateActiveItem( 0, false );
+			this.updateMediaContent();
+		}
+
 		this.updatePauseButton();
 
 		// Always register for visibility monitoring first
@@ -128,7 +133,7 @@ export class MediaAccordion {
 		this.slider = new KeenSlider(
 			this.contentContainer,
 			{
-				initial: this.currentIndex,
+				initial: this.currentIndex !== null ? this.currentIndex : 0,
 				slides: {
 					perView: 1,
 					spacing: CONFIG.DEFAULTS.SLIDER_SPACING,
@@ -392,6 +397,11 @@ export class MediaAccordion {
 			return;
 		}
 
+		// Guard against null currentIndex
+		if ( this.currentIndex === null || ! this.items[ this.currentIndex ] ) {
+			return;
+		}
+
 		const mediaTemplate = this.items[ this.currentIndex ].querySelector(
 			CONFIG.SELECTORS.MEDIA_TEMPLATE
 		);
@@ -446,6 +456,11 @@ export class MediaAccordion {
 	 * @return {number} Duration in milliseconds
 	 */
 	getAnimationDuration() {
+		// Guard against null currentIndex
+		if ( this.currentIndex === null || ! this.items[ this.currentIndex ] ) {
+			return CONFIG.DEFAULTS.ANIMATION_DURATION;
+		}
+
 		const currentItem = this.items[ this.currentIndex ];
 		const duration = window
 			.getComputedStyle( currentItem )
@@ -511,9 +526,14 @@ export class MediaAccordion {
 
 		// Update UI
 		this.updatePauseButton();
-		this.items[ this.currentIndex ].classList.add(
-			CONFIG.SELECTORS.PAUSED_CLASS
-		);
+
+		// Guard against null currentIndex
+		if ( this.currentIndex !== null && this.items[ this.currentIndex ] ) {
+			this.items[ this.currentIndex ].classList.add(
+				CONFIG.SELECTORS.PAUSED_CLASS
+			);
+		}
+
 		this.handleVideoPlayback();
 	}
 
@@ -545,9 +565,14 @@ export class MediaAccordion {
 
 		// Update UI
 		this.updatePauseButton();
-		this.items[ this.currentIndex ].classList.remove(
-			CONFIG.SELECTORS.PAUSED_CLASS
-		);
+
+		// Guard against null currentIndex
+		if ( this.currentIndex !== null && this.items[ this.currentIndex ] ) {
+			this.items[ this.currentIndex ].classList.remove(
+				CONFIG.SELECTORS.PAUSED_CLASS
+			);
+		}
+
 		this.handleVideoPlayback();
 	}
 

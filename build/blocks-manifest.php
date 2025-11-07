@@ -5,7 +5,7 @@ return array(
 		'$schema' => 'https://schemas.wp.org/trunk/block.json',
 		'apiVersion' => 3,
 		'name' => 'srg/media-accordion',
-		'version' => '2.0.2',
+		'version' => '2.1.0',
 		'title' => 'Media Accordion',
 		'category' => 'widgets',
 		'icon' => 'list-view',
@@ -18,6 +18,24 @@ return array(
 			'autoplay' => array(
 				'type' => 'boolean',
 				'default' => true
+			),
+			'defaultMediaType' => array(
+				'type' => 'string',
+				'default' => 'image'
+			),
+			'defaultMediaId' => array(
+				'type' => 'number',
+				'role' => 'content'
+			),
+			'defaultMediaUrl' => array(
+				'type' => 'string',
+				'source' => 'attribute',
+				'selector' => '.wp-block-srg-media-accordion_media-wrap video,.wp-block-srg-media-accordion_media-wrap img',
+				'attribute' => 'src',
+				'role' => 'content'
+			),
+			'defaultMediaSizeSlug' => array(
+				'type' => 'string'
 			),
 			'layout' => array(
 				'type' => 'string',
