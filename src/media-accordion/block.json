@@ -16,6 +16,10 @@
 			"type": "boolean",
 			"default": true
 		},
+		"mediaWidth": {
+			"type": "number",
+			"default": 50
+		},
 		"defaultMediaType": {
 			"type": "string",
 			"default": "image"

@@ -19,6 +19,7 @@ import {
 	ToggleControl,
 	RadioControl,
 	SelectControl,
+	RangeControl,
 } from '@wordpress/components';
 import { createBlock } from '@wordpress/blocks';
 import { useDispatch, useSelect } from '@wordpress/data';
@@ -193,19 +194,18 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 	return (
 		<>
 			<InspectorControls>
-				<PanelBody
-					title={ __( 'Accordion Settings', 'media-accordion' ) }
-				>
+				<PanelBody title={ __( 'Settings', 'media-accordion' ) }>
+					<RangeControl
+						label={ __( 'Media Width (%)', 'media-accordion' ) }
+						value={ attributes.mediaWidth }
+						onChange={ ( value ) =>
+							setAttributes( { mediaWidth: value } )
+						}
+						min={ 15 }
+						max={ 85 }
+					/>
 					<ToggleControl
 						label={ __( 'Autoplay', 'media-accordion' ) }
-						help={
-							attributes.autoplay
-								? __(
-										'Slides advance automatically',
-										'media-accordion'
-								  )
-								: __( 'Manual play only', 'media-accordion' )
-						}
 						checked={ !! attributes.autoplay }
 						onChange={ ( value ) =>
 							setAttributes( { autoplay: !! value } )
@@ -437,11 +437,12 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 					className: `is-${ attributes.layout || 'layout-1' }`,
 					style: {
 						'--active-item-bg-color': attributes.activeItemBgColor,
+						'--media-accordion-media-width': `${ attributes.mediaWidth }%`,
 					},
 				} ) }
 			>
 				<div style={ { display: 'flex', gap: '20px' } }>
-					<div style={ { flex: '1' } }>
+					<div style={ { flex: '1 1 auto' } }>
 						<InnerBlocks
 							allowedBlocks={ ALLOWED_BLOCKS }
 							template={ TEMPLATE }
@@ -463,9 +464,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 					</div>
 					<div
 						style={ {
-							flex: 1,
-							minWidth: '300px',
-							maxWidth: '500px',
+							flex: `0 0 var(--media-accordion-media-width, 50%)`,
 						} }
 					>
 						{ /* Show media preview from first media-accordion-item */ }

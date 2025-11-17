@@ -22,9 +22,16 @@ export default function save( { attributes } ) {
 		}`,
 		'data-autoplay': attributes.autoplay ? 'true' : 'false',
 		'data-has-default-media': attributes.defaultMediaId ? 'true' : 'false',
-		style: attributes.activeItemBgColor
-			? { '--active-item-bg-color': attributes.activeItemBgColor }
-			: {},
+		style: {
+			...( attributes.mediaWidth && attributes.mediaWidth !== 50
+				? {
+						'--media-accordion-media-width': `${ attributes.mediaWidth }%`,
+				  }
+				: {} ),
+			...( attributes.activeItemBgColor
+				? { '--active-item-bg-color': attributes.activeItemBgColor }
+				: {} ),
+		},
 	} );
 	const baseClass = blockProps.className.split( ' ' )[ 0 ];
 	return (

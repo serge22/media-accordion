@@ -13,7 +13,7 @@
 
 	&_media-container {
 		position: relative;
-		flex: 1;
+		flex: 0 0 var(--media-accordion-media-width, 50%);
 	}
 
 	&_media-wrap {
@@ -166,7 +166,7 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			flex: 1;
+			flex: 1 1 auto;
 			padding: 0;
 		}
 

@@ -19,6 +19,10 @@ return array(
 				'type' => 'boolean',
 				'default' => true
 			),
+			'mediaWidth' => array(
+				'type' => 'number',
+				'default' => 50
+			),
 			'defaultMediaType' => array(
 				'type' => 'string',
 				'default' => 'image'
