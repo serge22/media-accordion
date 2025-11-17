@@ -204,6 +204,21 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 						min={ 15 }
 						max={ 85 }
 					/>
+
+					<RangeControl
+						label={ __(
+							'Gap Between Columns (%)',
+							'media-accordion'
+						) }
+						value={ parseFloat( attributes.gap ) || 0 }
+						onChange={ ( value ) =>
+							setAttributes( { gap: value ?? 0 } )
+						}
+						min={ 0 }
+						max={ 20 }
+						step={ 0.5 }
+					/>
+
 					<ToggleControl
 						label={ __( 'Autoplay', 'media-accordion' ) }
 						checked={ !! attributes.autoplay }
@@ -441,7 +456,7 @@ export default function Edit( { attributes, setAttributes, clientId } ) {
 					},
 				} ) }
 			>
-				<div style={ { display: 'flex', gap: '20px' } }>
+				<div style={ { display: 'flex', gap: `${ attributes.gap }%` } }>
 					<div style={ { flex: '1 1 auto' } }>
 						<InnerBlocks
 							allowedBlocks={ ALLOWED_BLOCKS }

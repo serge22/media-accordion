@@ -8,7 +8,7 @@
 .wp-block-srg-media-accordion {
 	display: flex;
 	flex-direction: column-reverse;
-	gap: 1.0625rem;
+	gap: var(--media-accordion-gap);
 	overflow: hidden;
 
 	&_media-container {
@@ -160,7 +160,7 @@
 
 	.wp-block-srg-media-accordion {
 		flex-direction: row;
-		gap: 0;
+		gap: var(--media-accordion-gap);
 
 		&_content {
 			display: flex;

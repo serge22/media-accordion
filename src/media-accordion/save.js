@@ -28,6 +28,9 @@ export default function save( { attributes } ) {
 						'--media-accordion-media-width': `${ attributes.mediaWidth }%`,
 				  }
 				: {} ),
+			...( attributes.gap
+				? { '--media-accordion-gap': attributes.gap + '%' }
+				: {} ),
 			...( attributes.activeItemBgColor
 				? { '--active-item-bg-color': attributes.activeItemBgColor }
 				: {} ),
