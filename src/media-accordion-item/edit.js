@@ -19,6 +19,7 @@ import {
 	MediaUploadCheck,
 	RichText,
 } from '@wordpress/block-editor';
+import { useSelect } from '@wordpress/data';
 
 import { PanelBody, TextControl, Button } from '@wordpress/components';
 
@@ -44,11 +45,50 @@ const TEMPLATE = [
  * @param {Object}   props               - Block edit function props
  * @param {Object}   props.attributes    - Block attributes object
  * @param {Function} props.setAttributes - Function to set block attributes
+ * @param {string}   props.clientId      - Unique client ID for this block instance
  * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-edit-save/#edit
  *
  * @return {JSX.Element} Element to render.
  */
-export default function Edit( { attributes, setAttributes } ) {
+export default function Edit( { attributes, setAttributes, clientId } ) {
+	const isActive = useSelect(
+		( select ) => {
+			const blockEditor = select( 'core/block-editor' );
+			const parentAccordionClientId =
+				blockEditor.getBlockRootClientId( clientId );
+			if ( ! parentAccordionClientId ) {
+				return false;
+			}
+
+			const accordionItems = blockEditor.getBlocks(
+				parentAccordionClientId
+			);
+			if ( accordionItems.length === 0 ) {
+				return false;
+			}
+
+			const selectedClientId = blockEditor.getSelectedBlockClientId();
+
+			if ( ! selectedClientId ) {
+				return accordionItems[ 0 ]?.clientId === clientId;
+			}
+
+			// Expand the item that is selected or contains the selected descendant block.
+			const selectedParents =
+				blockEditor.getBlockParents( selectedClientId );
+			const activeItem = accordionItems.find(
+				( item ) =>
+					item.clientId === selectedClientId ||
+					selectedParents.includes( item.clientId )
+			);
+
+			return (
+				activeItem?.clientId === clientId ||
+				( ! activeItem && accordionItems[ 0 ]?.clientId === clientId )
+			);
+		},
+		[ clientId ]
+	);
 	const handleDurationChange = ( value ) => {
 		setAttributes( { duration: parseInt( value, 10 ) || 0 } );
 	};
@@ -102,6 +142,10 @@ export default function Edit( { attributes, setAttributes } ) {
 			/>
 		);
 	}
+
+	const blockProps = useBlockProps( {
+		className: isActive ? 'active' : undefined,
+	} );
 
 	return (
 		<>
@@ -158,7 +202,7 @@ export default function Edit( { attributes, setAttributes } ) {
 					</MediaUploadCheck>
 				</PanelBody>
 			</InspectorControls>
-			<div { ...useBlockProps() }>
+			<div { ...blockProps }>
 				<div className="header">
 					<RichText
 						className="title"

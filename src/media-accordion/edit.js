@@ -23,7 +23,7 @@ import {
 } from '@wordpress/components';
 import { createBlock } from '@wordpress/blocks';
 import { useDispatch, useSelect } from '@wordpress/data';
-import { useEffect, useRef, useState } from '@wordpress/element';
+import { useEffect, useState } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 
 /**
@@ -54,84 +54,16 @@ const TEMPLATE = [ [ 'srg/media-accordion-item' ] ];
  */
 export default function Edit( { attributes, setAttributes, clientId } ) {
 	const { insertBlock } = useDispatch( 'core/block-editor' );
-	const lastActiveBlockRef = useRef( null );
 	const [ currentMedia, setCurrentMedia ] = useState( null );
 
-	// Get inner blocks and selected block
-	const { innerBlocks, selectedBlockClientId, imageSizes } = useSelect(
-		( select ) => {
-			const blockEditor = select( 'core/block-editor' );
-			const blocks = blockEditor.getBlocks( clientId );
-			const selectedBlock = blockEditor.getSelectedBlock();
-			const settings = select( blockEditorStore ).getSettings();
+	// Get inner blocks and image size settings
+	const { imageSizes } = useSelect( ( select ) => {
+		const settings = select( blockEditorStore ).getSettings();
 
-			// Check if selected block is one of our inner blocks or a descendant
-			let selectedInnerBlockId = null;
-			if ( selectedBlock ) {
-				// Check if the selected block is directly an inner block
-				const isDirectInnerBlock = blocks.some(
-					( block ) => block.clientId === selectedBlock.clientId
-				);
-				if ( isDirectInnerBlock ) {
-					selectedInnerBlockId = selectedBlock.clientId;
-				} else {
-					// Check if the selected block is a descendant of any inner block
-					blocks.forEach( ( block ) => {
-						const parents = blockEditor.getBlockParents(
-							selectedBlock.clientId
-						);
-						if ( parents.includes( block.clientId ) ) {
-							selectedInnerBlockId = block.clientId;
-						}
-					} );
-				}
-			}
-
-			return {
-				innerBlocks: blocks,
-				selectedBlockClientId: selectedInnerBlockId,
-				imageSizes: settings?.imageSizes || [],
-			};
-		},
-		[ clientId ]
-	);
-
-	// Apply 'active' class to DOM elements directly (editor only, not saved)
-	useEffect( () => {
-		if ( innerBlocks.length === 0 ) {
-			return;
-		}
-
-		// Determine which block should be active
-		let activeBlockId;
-		if ( selectedBlockClientId ) {
-			// An inner block is selected, make it active
-			activeBlockId = selectedBlockClientId;
-			lastActiveBlockRef.current = selectedBlockClientId;
-		} else if ( lastActiveBlockRef.current ) {
-			// No selection, keep the last active block
-			activeBlockId = lastActiveBlockRef.current;
-		} else {
-			// Default to first block
-			activeBlockId = innerBlocks[ 0 ].clientId;
-			lastActiveBlockRef.current = activeBlockId;
-		}
-
-		// Apply/remove active class to DOM elements
-		innerBlocks.forEach( ( block ) => {
-			const blockElement = document.querySelector(
-				`[data-block="${ block.clientId }"]`
-			);
-
-			if ( blockElement ) {
-				if ( block.clientId === activeBlockId ) {
-					blockElement.classList.add( 'active' );
-				} else {
-					blockElement.classList.remove( 'active' );
-				}
-			}
-		} );
-	}, [ innerBlocks, selectedBlockClientId ] );
+		return {
+			imageSizes: settings?.imageSizes || [],
+		};
+	}, [] );
 
 	// Generate unique ID if it doesn't exist
 	useEffect( () => {
