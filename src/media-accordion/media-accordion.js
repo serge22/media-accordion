@@ -36,6 +36,7 @@ export class MediaAccordion {
 	mediaLoaded = false; // Media is inserted lazily, once near/in the viewport
 	isIntersecting = false; // Raw intersection state (ignores opacity)
 	visibilityRecheckId = null;
+	prefetched = new Map(); // item index -> pre-cloned media node
 
 	/**
 	 * Initialize the accordion
@@ -246,6 +247,7 @@ export class MediaAccordion {
 
 		if ( isVisible ) {
 			this.loadMediaIfNeeded();
+			this.prefetchNextMedia();
 			// Initialize slider if needed and in portrait mode
 			if ( ! Utils.isLandscapeOrSquare() && ! this.slider ) {
 				this.initSlider();
@@ -267,6 +269,33 @@ export class MediaAccordion {
 		if ( ! this.mediaLoaded && this.currentIndex !== null ) {
 			this.updateMediaContent();
 		}
+	}
+
+	/**
+	 * Start downloading the next item's media in the background so the
+	 * switch is instant. The detached clone is reused by updateMediaContent().
+	 */
+	prefetchNextMedia() {
+		if ( this.items.length < 2 || this.currentIndex === null ) {
+			return;
+		}
+		const next = ( this.currentIndex + 1 ) % this.items.length;
+		if ( this.prefetched.has( next ) ) {
+			return;
+		}
+		const template = this.items[ next ].querySelector(
+			CONFIG.SELECTORS.MEDIA_TEMPLATE
+		);
+		if ( ! template || ! template.content ) {
+			return;
+		}
+		const node = document.importNode( template.content, true );
+		const video = node.querySelector( 'video' );
+		if ( video ) {
+			video.preload = 'auto';
+			video.load();
+		}
+		this.prefetched.set( next, node );
 	}
 
 	/**
@@ -450,7 +479,11 @@ export class MediaAccordion {
 			return;
 		}
 
-		const mediaElement = mediaTemplate.content.cloneNode( true );
+		// Reuse media prefetched while the previous item was playing.
+		const mediaElement =
+			this.prefetched.get( this.currentIndex ) ||
+			mediaTemplate.content.cloneNode( true );
+		this.prefetched.delete( this.currentIndex );
 
 		// Handle video autoplay based on pause state
 		const video = mediaElement.querySelector( 'video' );
@@ -462,6 +495,9 @@ export class MediaAccordion {
 		this.mediaContainer.innerHTML = '';
 		this.mediaContainer.appendChild( mediaElement );
 		this.mediaLoaded = true;
+		if ( this.isVisible ) {
+			this.prefetchNextMedia();
+		}
 
 		// Force reflow before fading - use double rAF to ensure browser has painted initial state
 		requestAnimationFrame( () => {
