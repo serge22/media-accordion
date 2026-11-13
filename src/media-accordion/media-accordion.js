@@ -33,6 +33,9 @@ export class MediaAccordion {
 	isVisible = false;
 	wasUserPaused = false;
 	hasStartedAnimation = false; // Track if animation has ever started
+	mediaLoaded = false; // Media is inserted lazily, once near/in the viewport
+	isIntersecting = false; // Raw intersection state (ignores opacity)
+	visibilityRecheckId = null;
 
 	/**
 	 * Initialize the accordion
@@ -56,6 +59,7 @@ export class MediaAccordion {
 
 		// Bind methods
 		this.handleClick = this.handleClick.bind( this );
+		this.handleMouseEnterItem = this.handleMouseEnterItem.bind( this );
 		this.handleOrientationChange = Utils.debounce(
 			this.handleOrientationChange.bind( this ),
 			CONFIG.DEFAULTS.RESIZE_DEBOUNCE
@@ -92,7 +96,7 @@ export class MediaAccordion {
 		// When autoplay is false and default media exists, skip setting active item
 		if ( this.autoplayEnabled || ! this.hasDefaultMedia ) {
 			this.updateActiveItem( 0, false );
-			this.updateMediaContent();
+			// Media is inserted later, when the accordion nears the viewport.
 		}
 
 		this.updatePauseButton();
@@ -178,10 +182,7 @@ export class MediaAccordion {
 
 		if ( this.accordion.classList.contains( 'is-layout-2' ) ) {
 			this.items.forEach( ( item ) =>
-				item.addEventListener(
-					'mouseenter',
-					this.handleMouseEnterItem.bind( this )
-				)
+				item.addEventListener( 'mouseenter', this.handleMouseEnterItem )
 			);
 		}
 
@@ -244,6 +245,7 @@ export class MediaAccordion {
 		this.isVisible = isVisible;
 
 		if ( isVisible ) {
+			this.loadMediaIfNeeded();
 			// Initialize slider if needed and in portrait mode
 			if ( ! Utils.isLandscapeOrSquare() && ! this.slider ) {
 				this.initSlider();
@@ -256,6 +258,45 @@ export class MediaAccordion {
 			// Pause animation when not visible
 			this.pauseAnimation();
 		}
+	}
+
+	/**
+	 * Insert the active item's media the first time it is needed
+	 */
+	loadMediaIfNeeded() {
+		if ( ! this.mediaLoaded && this.currentIndex !== null ) {
+			this.updateMediaContent();
+		}
+	}
+
+	/**
+	 * Called when the accordion is close to (or in) the viewport
+	 */
+	onNearViewport() {
+		this.loadMediaIfNeeded();
+	}
+
+	/**
+	 * Called while the accordion intersects the viewport but is not yet
+	 * visible (e.g. an ancestor is fading in from opacity 0). Re-checks
+	 * cheaply until it becomes visible or stops intersecting.
+	 * @param {number} [attempt=0] - Re-check counter
+	 */
+	scheduleVisibilityRecheck( attempt = 0 ) {
+		if ( this.visibilityRecheckId || attempt > 40 ) {
+			return;
+		}
+		this.visibilityRecheckId = setTimeout( () => {
+			this.visibilityRecheckId = null;
+			if ( ! this.isIntersecting || this.isVisible ) {
+				return;
+			}
+			if ( Utils.isElementVisible( this.accordion ) ) {
+				this.onVisibilityChange( true );
+			} else {
+				this.scheduleVisibilityRecheck( attempt + 1 );
+			}
+		}, 250 );
 	}
 
 	/**
@@ -415,10 +456,12 @@ export class MediaAccordion {
 		const video = mediaElement.querySelector( 'video' );
 		if ( video ) {
 			video.autoplay = ! this.isPaused || ! this.autoplayEnabled;
+			video.preload = video.autoplay ? 'auto' : 'metadata';
 		}
 
 		this.mediaContainer.innerHTML = '';
 		this.mediaContainer.appendChild( mediaElement );
+		this.mediaLoaded = true;
 
 		// Force reflow before fading - use double rAF to ensure browser has painted initial state
 		requestAnimationFrame( () => {
@@ -608,6 +651,10 @@ export class MediaAccordion {
 	 */
 	destroy() {
 		this.clearTimer();
+		if ( this.visibilityRecheckId ) {
+			clearTimeout( this.visibilityRecheckId );
+			this.visibilityRecheckId = null;
+		}
 
 		// Remove event listeners
 		if ( this.accordion ) {
@@ -615,10 +662,7 @@ export class MediaAccordion {
 		}
 
 		this.items.forEach( ( item ) =>
-			item.removeEventListener(
-				'mouseenter',
-				this.handleMouseEnterItem.bind( this )
-			)
+			item.removeEventListener( 'mouseenter', this.handleMouseEnterItem )
 		);
 
 		window.removeEventListener(

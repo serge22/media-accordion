@@ -17,10 +17,11 @@ import { Utils } from './utils';
 
 export const AccordionVisibilityManager = {
 	observer: null,
+	loadObserver: null,
 	accordions: new Map(),
 
 	/**
-	 * Initialize the global observer
+	 * Initialize the global observers
 	 */
 	init() {
 		if ( ! this.observer ) {
@@ -28,14 +29,24 @@ export const AccordionVisibilityManager = {
 				( entries ) => {
 					entries.forEach( ( entry ) => {
 						const accordion = this.accordions.get( entry.target );
-						if ( accordion ) {
-							if (
-								entry.isIntersecting &&
-								Utils.isElementVisible( entry.target )
-							) {
-								accordion.onVisibilityChange( true );
-							} else {
-								accordion.onVisibilityChange( false );
+						if ( ! accordion ) {
+							return;
+						}
+						accordion.isIntersecting = entry.isIntersecting;
+						if ( entry.isIntersecting ) {
+							// Loading depends on intersection only, not opacity.
+							accordion.onNearViewport();
+						}
+						if (
+							entry.isIntersecting &&
+							Utils.isElementVisible( entry.target )
+						) {
+							accordion.onVisibilityChange( true );
+						} else {
+							accordion.onVisibilityChange( false );
+							if ( entry.isIntersecting ) {
+								// e.g. ancestor still fading in from opacity 0
+								accordion.scheduleVisibilityRecheck();
 							}
 						}
 					} );
@@ -45,6 +56,22 @@ export const AccordionVisibilityManager = {
 					rootMargin: '0px',
 					threshold: 0.1,
 				}
+			);
+		}
+
+		// Separate observer: start loading media shortly before scrolling in.
+		if ( ! this.loadObserver ) {
+			this.loadObserver = new IntersectionObserver(
+				( entries ) => {
+					entries.forEach( ( entry ) => {
+						const accordion = this.accordions.get( entry.target );
+						if ( accordion && entry.isIntersecting ) {
+							accordion.onNearViewport();
+							this.loadObserver.unobserve( entry.target );
+						}
+					} );
+				},
+				{ root: null, rootMargin: '300px 0px', threshold: 0 }
 			);
 		}
 	},
@@ -57,6 +84,7 @@ export const AccordionVisibilityManager = {
 		this.init();
 		this.accordions.set( accordion.accordion, accordion );
 		this.observer.observe( accordion.accordion );
+		this.loadObserver.observe( accordion.accordion );
 	},
 
 	/**
@@ -66,6 +94,7 @@ export const AccordionVisibilityManager = {
 	unregister( accordion ) {
 		if ( this.observer && this.accordions.has( accordion.accordion ) ) {
 			this.observer.unobserve( accordion.accordion );
+			this.loadObserver?.unobserve( accordion.accordion );
 			this.accordions.delete( accordion.accordion );
 		}
 	},
@@ -76,7 +105,9 @@ export const AccordionVisibilityManager = {
 	destroy() {
 		if ( this.observer ) {
 			this.observer.disconnect();
+			this.loadObserver?.disconnect();
 			this.observer = null;
+			this.loadObserver = null;
 			this.accordions.clear();
 		}
 	},

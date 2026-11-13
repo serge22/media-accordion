@@ -2,7 +2,7 @@
 Contributors:      The WordPress Contributors
 Tags:              block
 Tested up to:      6.7
-Stable tag:        1.0.0
+Stable tag:        2.2.2
 License:           GPL-2.0-or-later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,6 +44,9 @@ directory take precedence. For example, `/assets/screenshot-1.png` would win ove
 2. This is the second screen shot
 
 == Changelog ==
+
+= 2.2.2 =
+* Performance: media is now inserted only when an accordion nears the viewport; preload hints on videos; fixed mouseenter listener cleanup.
 
 = 1.0.0 =
 * Release
